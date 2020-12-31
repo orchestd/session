@@ -8,7 +8,7 @@ type SessionResolverBuilder interface {
 }
 
 type SessionResolver interface {
-	GetOrderIdFromToken(context context.Context,token string) (string,error)
+	GetaActiveOrderFromToken(context context.Context,token string) (string,error)
 }
 
 type SessionRepo interface {

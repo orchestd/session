@@ -9,15 +9,15 @@ type sessionWrapper struct {
 	repo session.SessionRepo
 }
 
-func (s *sessionWrapper) GetOrderIdFromToken(c context.Context,token string) (string,error) {
-	type OrderId struct {
-		OrderId string `json:"orderId"`
+func (s *sessionWrapper) GetaActiveOrderFromToken(c context.Context,token string) (string,error) {
+	type ActiveOrder struct {
+		ActiveOrder string `json:"activeOrder"`
 	}
-	var order OrderId
+	var order ActiveOrder
 	if err := s.repo.GetUserSessionByTokenToStruct(c,token,&order);err != nil {
 		return "", err
 	} else {
-		return order.OrderId , nil
+		return order.ActiveOrder , nil
 	}
 }
 

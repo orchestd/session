@@ -10,7 +10,7 @@ type cacheRepo struct {
 	sessionCollectionName string
 }
 
-func NewCacheRepo(cache CacheFunctions,collectionName string) *cacheRepo {
+func NewSessionCacheRepo(cache CacheFunctions,collectionName string) *cacheRepo {
 	return &cacheRepo{cache: cache,sessionCollectionName: collectionName}
 }
 
