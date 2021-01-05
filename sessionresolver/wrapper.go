@@ -3,18 +3,23 @@ package sessionresolver
 import (
 	"bitbucket.org/HeilaSystems/session"
 	"context"
+	"fmt"
 )
 
 type sessionWrapper struct {
 	repo session.SessionRepo
 }
 
-func (s *sessionWrapper) GetaActiveOrderFromToken(c context.Context,token string) (string,error) {
+const Token = "token"
+func (s *sessionWrapper) GetActiveOrderByContext(c context.Context) (string,error) {
 	type ActiveOrder struct {
 		ActiveOrder string `json:"activeOrder"`
+
 	}
 	var order ActiveOrder
-	if err := s.repo.GetUserSessionByTokenToStruct(c,token,&order);err != nil {
+	if val , ok := c.Value(Token).(string);!ok {
+		return "", fmt.Errorf("tokenNotFound")
+	}else if err := s.repo.GetUserSessionByTokenToStruct(c,val,&order);err != nil {
 		return "", err
 	} else {
 		return order.ActiveOrder , nil

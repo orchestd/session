@@ -1,16 +1,19 @@
 package cache
 
-import "context"
+import (
+	"bitbucket.org/HeilaSystems/dependencybundler/interfaces/cache"
+	"context"
+)
 
 type CacheFunctions interface {
 	GetById(c context.Context, collectionName string, id interface{}, dest interface{}) error
 }
 type cacheRepo struct {
-	cache                 CacheFunctions
+	cache                 cache.CacheStorageGetter
 	sessionCollectionName string
 }
 
-func NewSessionCacheRepo(cache CacheFunctions,collectionName string) *cacheRepo {
+func NewSessionCacheRepo(cache cache.CacheStorageGetter,collectionName string) *cacheRepo {
 	return &cacheRepo{cache: cache,sessionCollectionName: collectionName}
 }
 
