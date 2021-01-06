@@ -6,7 +6,7 @@ import (
 )
 
 type CacheFunctions interface {
-	GetById(c context.Context, collectionName string, id interface{}, dest interface{}) error
+	GetById(c context.Context, collectionName string, id interface{}, dest interface{}) cacheRepo
 }
 type cacheRepo struct {
 	cache                 cache.CacheStorageGetter

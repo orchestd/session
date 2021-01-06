@@ -8,7 +8,7 @@ type SessionResolverBuilder interface {
 }
 
 type SessionResolver interface {
-	GetActiveOrderByContext(context context.Context) (string,error)
+	GetActiveOrder(context context.Context) (string,error)
 }
 
 type SessionRepo interface {

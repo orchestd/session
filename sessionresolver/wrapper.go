@@ -11,7 +11,7 @@ type sessionWrapper struct {
 }
 
 const Token = "token"
-func (s *sessionWrapper) GetActiveOrderByContext(c context.Context) (string,error) {
+func (s *sessionWrapper) GetActiveOrder(c context.Context) (string,error) {
 	type ActiveOrder struct {
 		ActiveOrder string `json:"activeOrder"`
 
