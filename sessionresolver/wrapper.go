@@ -11,11 +11,10 @@ type sessionWrapper struct {
 }
 
 const Token = "token"
+type ActiveOrder struct {
+	ActiveOrder string `json:"activeOrder"`
+}
 func (s *sessionWrapper) GetActiveOrder(c context.Context) (string,error) {
-	type ActiveOrder struct {
-		ActiveOrder string `json:"activeOrder"`
-
-	}
 	var order ActiveOrder
 	if val , ok := c.Value(Token).(string);!ok {
 		return "", fmt.Errorf("tokenNotFound")
