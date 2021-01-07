@@ -1,6 +1,9 @@
 package session
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type SessionResolverBuilder interface {
 	SetRepo(repo SessionRepo) SessionResolverBuilder
@@ -8,9 +11,13 @@ type SessionResolverBuilder interface {
 }
 
 type SessionResolver interface {
-	GetActiveOrder(context context.Context) (string,error)
+	GetCurrentSession(context context.Context) (Session,error)
 }
-
+type Session interface {
+	GetActiveOrderId() string
+	GetCurrentCustomerId() string
+	GetNow() (*time.Time,error)
+}
 type SessionRepo interface {
 	GetUserSessionByTokenToStruct(context context.Context,token string,dest interface{}) error
 }
