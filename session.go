@@ -12,6 +12,7 @@ type SessionResolverBuilder interface {
 
 type SessionResolver interface {
 	GetCurrentSession(context context.Context) (Session,error)
+	SetCurrentSession(c context.Context, CustomerId string, ActiveOrderId string, FakeNow *string) error
 }
 type Session interface {
 	GetActiveOrderId() string
@@ -20,5 +21,6 @@ type Session interface {
 }
 type SessionRepo interface {
 	GetUserSessionByTokenToStruct(context context.Context,token string,dest interface{}) error
+	Insert(ctx context.Context , id string, obj interface{}) error
 }
 
