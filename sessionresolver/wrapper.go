@@ -28,16 +28,16 @@ func (c CurrentSession) GetCurrentCustomerId() string {
 	return c.CustomerId
 }
 
-func (c CurrentSession) GetNow() (*time.Time, error) {
+func (c CurrentSession) GetNow() (time.Time, error) {
 	if c.FakeNow != nil {
 		if t, err := time.Parse(TimeLayoutYYYYMMDD_HHMMSS, *c.FakeNow); err != nil {
-			return nil, err
+			return time.Time{}, err
 		} else {
-			return &t, nil
+			return t, nil
 		}
 	} else {
 		t := time.Now()
-		return &t, nil
+		return t, nil
 	}
 }
 

@@ -18,7 +18,7 @@ type SessionResolver interface {
 type Session interface {
 	GetActiveOrderId() string
 	GetCurrentCustomerId() string
-	GetNow() (*time.Time,error)
+	GetNow() (time.Time,error)
 }
 
 type SessionRepo interface {
