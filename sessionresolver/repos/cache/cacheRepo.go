@@ -5,9 +5,6 @@ import (
 	"context"
 )
 
-type CacheFunctions interface {
-	GetById(c context.Context, collectionName string, id interface{}, dest interface{}) cacheRepo
-}
 type cacheRepo struct {
 	cacheGetter                 cache.CacheStorageGetter
 	cacheSetter                 cache.CacheStorageSetter
@@ -26,6 +23,6 @@ func (r cacheRepo) GetUserSessionByTokenToStruct(c context.Context,token string,
 	return nil
 }
 
-func (r cacheRepo) Insert(ctx context.Context , id string, obj interface{}) error {
-	return r.cacheSetter.Insert(ctx, "sessions", id, r.version, obj)
+func (r cacheRepo) InsertOrUpdate(ctx context.Context , id string, obj interface{}) error {
+	return r.cacheSetter.InsertOrUpdate(ctx, r.sessionCollectionName, id, r.version, obj)
 }

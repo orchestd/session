@@ -58,5 +58,6 @@ func (s *sessionWrapper) SetCurrentSession(c context.Context, CustomerId string,
 		ActiveOrderId: ActiveOrderId,
 		FakeNow:       FakeNow,
 	}
-	return s.repo.Insert(c, cSession.GetCurrentCustomerId(), cSession)
+	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
 }
+
