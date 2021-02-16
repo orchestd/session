@@ -63,6 +63,9 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 	} else if err := s.repo.GetUserSessionByTokenToStruct(c, val, &order); err != nil {
 		return nil, err
 	} else {
+		order.getLatestCacheVersions = func() (map[string]string, error) {
+			return s.repo.GetCacheVersions(c)
+		}
 		return order, nil
 	}
 }
