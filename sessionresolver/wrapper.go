@@ -19,7 +19,7 @@ type CurrentSession struct {
 	ActiveOrderId          string            `json:"activeOrderId"`
 	FakeNow                *string           `json:"fakeNow"`
 	CacheVersions          map[string]string `json:"cacheVersions"`
-	getLatestCacheVersions func() (map[string]string, error)
+	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
 func (c CurrentSession) GetActiveOrderId() string {
@@ -44,9 +44,16 @@ func (c CurrentSession) GetNow() (time.Time, error) {
 }
 
 func (c CurrentSession) GetCacheVersions() (map[string]string, error) {
-	versions, err := c.getLatestCacheVersions()
+	now, err := c.GetNow()
 	if err != nil {
 		return nil, err
+	}
+	versions, err := c.getLatestCacheVersions(now)
+	if err != nil {
+		return nil, err
+	}
+	if c.CacheVersions == nil {
+		c.CacheVersions = make(map[string]string)
 	}
 	for collection, version := range versions {
 		if _, ok := c.CacheVersions[collection]; !ok {
@@ -63,8 +70,8 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 	} else if err := s.repo.GetUserSessionByTokenToStruct(c, val, &order); err != nil {
 		return nil, err
 	} else {
-		order.getLatestCacheVersions = func() (map[string]string, error) {
-			return s.repo.GetCacheVersions(c)
+		order.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {
+			return s.repo.GetCacheVersions(c, now)
 		}
 		return order, nil
 	}
@@ -77,8 +84,8 @@ func (s *sessionWrapper) SetCurrentSession(c context.Context, customerId string,
 		ActiveOrderId: activeOrderId,
 		FakeNow:       fakeNow,
 		CacheVersions: cacheVersions,
-		getLatestCacheVersions: func() (map[string]string, error) {
-			return s.repo.GetCacheVersions(c)
+		getLatestCacheVersions: func(now time.Time) (map[string]string, error) {
+			return s.repo.GetCacheVersions(c, now)
 		},
 	}
 	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)

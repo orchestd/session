@@ -25,5 +25,5 @@ type Session interface {
 type SessionRepo interface {
 	GetUserSessionByTokenToStruct(context context.Context, token string, dest interface{}) error
 	InsertOrUpdate(ctx context.Context, id string, obj interface{}) error
-	GetCacheVersions(ctx context.Context) (map[string]string, error)
+	GetCacheVersions(ctx context.Context, now time.Time) (map[string]string, error)
 }
