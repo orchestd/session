@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/HeilaSystems/cacheStorage"
 	"bitbucket.org/HeilaSystems/dependencybundler/interfaces/cache"
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -39,9 +40,12 @@ func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time) (map[str
 	for i := range versions {
 		var latestVersion cacheStorage.Version
 		for _, v := range versions[i].Versions {
-			if latestVersion.TimedTo.IsZero() || (v.TimedTo.After(latestVersion.TimedTo) && latestVersion.TimedTo.Before(now)) {
+			if (latestVersion.TimedTo.IsZero() || v.TimedTo.After(latestVersion.TimedTo)) && latestVersion.TimedTo.Before(now) {
 				latestVersion = v
 			}
+		}
+		if latestVersion.Version == "" {
+			return result, fmt.Errorf("no version found for collection %v by date %v", versions[i].CollectionName, now)
 		}
 		result[versions[i].CollectionName] = latestVersion.Version
 	}
