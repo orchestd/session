@@ -9,13 +9,13 @@ import (
 )
 
 type cacheRepo struct {
-	cacheGetter           cache.CacheStroageGetterWrapper
-	cacheSetter           cache.CacheStroageSetterWrapper
+	cacheGetter           cache.CacheStorageGetterWrapper
+	cacheSetter           cache.CacheStorageSetter
 	sessionCollectionName string
 	version               string
 }
 
-func NewSessionCacheRepo(cacheGetter cache.CacheStroageGetterWrapper, cacheSetter cache.CacheStroageSetterWrapper, collectionName string, version string) *cacheRepo {
+func NewSessionCacheRepo(cacheGetter cache.CacheStorageGetterWrapper, cacheSetter cache.CacheStorageSetter, collectionName string, version string) *cacheRepo {
 	return &cacheRepo{cacheGetter: cacheGetter, cacheSetter: cacheSetter, sessionCollectionName: collectionName, version: version}
 }
 
