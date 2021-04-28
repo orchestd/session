@@ -13,7 +13,7 @@ type SessionResolverBuilder interface {
 
 type SessionResolver interface {
 	GetCurrentSession(context context.Context) (Session, error)
-	SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
+	SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string, activeOrder *sessionresolver.ActiveOrder) error
 }
 
 type Session interface {
