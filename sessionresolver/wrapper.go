@@ -15,10 +15,10 @@ const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 
 type ActiveOrder struct {
-	ServiceType string
-	StoreId     string
-	TimeTo      time.Time
-	Tags        []string
+	SubServiceType string    `json:"subServiceType"`
+	StoreId        string    `json:"storeId"`
+	TimeTo         time.Time `json:"timeTo"`
+	Tags           []string  `json:"tags"`
 }
 
 type CurrentSession struct {
@@ -26,7 +26,7 @@ type CurrentSession struct {
 	ActiveOrderId          string            `json:"activeOrderId"`
 	FakeNow                *string           `json:"fakeNow"`
 	CacheVersions          map[string]string `json:"cacheVersions"`
-	ActiveOrder            *ActiveOrder       `json:"activeOrder"`
+	ActiveOrder            *ActiveOrder      `json:"activeOrder"`
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
