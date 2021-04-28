@@ -1,7 +1,6 @@
 package session
 
 import (
-	"bitbucket.org/HeilaSystems/session/sessionresolver"
 	"context"
 	"time"
 )
@@ -13,7 +12,8 @@ type SessionResolverBuilder interface {
 
 type SessionResolver interface {
 	GetCurrentSession(context context.Context) (Session, error)
-	SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string, activeOrder *sessionresolver.ActiveOrder) error
+	SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
+	SetActiveOrder(c context.Context, subServiceType string, storeId string, timeTo time.Time, tags []string) error
 }
 
 type Session interface {
@@ -21,7 +21,7 @@ type Session interface {
 	GetCurrentCustomerId() string
 	GetNow() (time.Time, error)
 	GetCacheVersions() (map[string]string, error)
-	GetActiveOrder() *sessionresolver.ActiveOrder
+	GetActiveOrder() (hasActiveOrder bool, subServiceType string, storeId string, timeTo time.Time, tags []string)
 }
 
 type SessionRepo interface {
