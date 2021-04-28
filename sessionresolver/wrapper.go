@@ -90,12 +90,13 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 }
 
 func (s *sessionWrapper) SetCurrentSession(c context.Context, customerId string, activeOrderId string,
-	fakeNow *string, cacheVersions map[string]string) error {
+	fakeNow *string, cacheVersions map[string]string, activeOrder *ActiveOrder) error {
 	cSession := CurrentSession{
 		CustomerId:    customerId,
 		ActiveOrderId: activeOrderId,
 		FakeNow:       fakeNow,
 		CacheVersions: cacheVersions,
+		ActiveOrder:   activeOrder,
 		getLatestCacheVersions: func(now time.Time) (map[string]string, error) {
 			return s.repo.GetCacheVersions(c, now)
 		},
