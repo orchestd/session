@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bitbucket.org/HeilaSystems/session/sessionresolver"
 	"context"
 	"time"
 )
@@ -20,6 +21,7 @@ type Session interface {
 	GetCurrentCustomerId() string
 	GetNow() (time.Time, error)
 	GetCacheVersions() (map[string]string, error)
+	GetActiveOrder() *sessionresolver.ActiveOrder
 }
 
 type SessionRepo interface {

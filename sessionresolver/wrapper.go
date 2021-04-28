@@ -14,12 +14,24 @@ type sessionWrapper struct {
 const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 
+type ActiveOrder struct {
+	ServiceType string
+	StoreId     string
+	TimeTo      time.Time
+	Tags        []string
+}
+
 type CurrentSession struct {
 	CustomerId             string            `json:"customerId"`
 	ActiveOrderId          string            `json:"activeOrderId"`
 	FakeNow                *string           `json:"fakeNow"`
 	CacheVersions          map[string]string `json:"cacheVersions"`
+	ActiveOrder            *ActiveOrder       `json:"activeOrder"`
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
+}
+
+func (c CurrentSession) GetActiveOrder() *ActiveOrder {
+	return c.ActiveOrder
 }
 
 func (c CurrentSession) GetActiveOrderId() string {
