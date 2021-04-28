@@ -30,8 +30,8 @@ type CurrentSession struct {
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
-func (c CurrentSession) GetActiveOrder() *ActiveOrder {
-	return c.ActiveOrder
+func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, subServiceType string, storeId string, timeTo time.Time, tags []string) {
+	return c.ActiveOrder != nil, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
 }
 
 func (c CurrentSession) GetActiveOrderId() string {
@@ -76,11 +76,15 @@ func (c CurrentSession) GetCacheVersions() (map[string]string, error) {
 }
 
 func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, error) {
+	return s.getCurrentSessionInt(c)
+}
+
+func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
 	var order CurrentSession
 	if val, ok := c.Value(Token).(string); !ok {
-		return nil, fmt.Errorf("tokenNotFound")
+		return order, fmt.Errorf("tokenNotFound")
 	} else if err := s.repo.GetUserSessionByTokenToStruct(c, val, &order); err != nil {
-		return nil, err
+		return order, err
 	} else {
 		order.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {
 			return s.repo.GetCacheVersions(c, now)
@@ -89,14 +93,28 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 	}
 }
 
+func (s *sessionWrapper) SetActiveOrder(c context.Context, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
+	cSession, err := s.getCurrentSessionInt(c)
+	if err != nil {
+		return err
+	}
+	cSession.ActiveOrder = &ActiveOrder{
+		SubServiceType: subServiceType,
+		StoreId:        storeId,
+		TimeTo:         timeTo,
+		Tags:           tags,
+	}
+
+	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+}
+
 func (s *sessionWrapper) SetCurrentSession(c context.Context, customerId string, activeOrderId string,
-	fakeNow *string, cacheVersions map[string]string, activeOrder *ActiveOrder) error {
+	fakeNow *string, cacheVersions map[string]string) error {
 	cSession := CurrentSession{
 		CustomerId:    customerId,
 		ActiveOrderId: activeOrderId,
 		FakeNow:       fakeNow,
 		CacheVersions: cacheVersions,
-		ActiveOrder:   activeOrder,
 		getLatestCacheVersions: func(now time.Time) (map[string]string, error) {
 			return s.repo.GetCacheVersions(c, now)
 		},
