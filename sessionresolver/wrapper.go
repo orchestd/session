@@ -31,7 +31,11 @@ type CurrentSession struct {
 }
 
 func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, subServiceType string, storeId string, timeTo time.Time, tags []string) {
-	return c.ActiveOrder != nil, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
+	if c.ActiveOrder != nil {
+		return true, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
+	} else {
+		return false, "", "", time.Time{}, nil
+	}
 }
 
 func (c CurrentSession) GetActiveOrderId() string {
