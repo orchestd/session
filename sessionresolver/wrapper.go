@@ -2,6 +2,7 @@ package sessionresolver
 
 import (
 	"bitbucket.org/HeilaSystems/session"
+	"bitbucket.org/HeilaSystems/session/models"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -132,13 +133,13 @@ func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context
 	return c, nil
 }
 
-func (s sessionWrapper) GetVersionsFromContext(c context.Context) (map[string]string, bool, error) {
+func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versions, bool, error) {
 	v := c.Value(DataVersionsKey)
 	if v != nil {
 		return nil, false, nil
 	}
 
-	versions := make(map[string]string)
+	versions := make(models.Versions)
 	err := json.Unmarshal([]byte(v.(string)), &versions)
 	if err != nil {
 		return nil, false, err
