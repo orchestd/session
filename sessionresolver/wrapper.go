@@ -135,7 +135,7 @@ func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context
 
 func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versions, bool, error) {
 	v := c.Value(DataVersionsKey)
-	if v != nil {
+	if v == nil {
 		return nil, false, nil
 	}
 
