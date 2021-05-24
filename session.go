@@ -14,6 +14,8 @@ type SessionResolver interface {
 	GetCurrentSession(context context.Context) (Session, error)
 	SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
 	SetActiveOrder(c context.Context, subServiceType string, storeId string, timeTo time.Time, tags []string) error
+	InjectDataVersions(c context.Context) (context.Context, error)
+	GetVersionsFromContext(c context.Context) (map[string]string, bool, error)
 }
 
 type Session interface {

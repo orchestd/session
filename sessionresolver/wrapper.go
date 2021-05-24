@@ -3,6 +3,7 @@ package sessionresolver
 import (
 	"bitbucket.org/HeilaSystems/session"
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -13,6 +14,8 @@ type sessionWrapper struct {
 
 const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
+const DataVersionsKey = "versions"
+
 
 type ActiveOrder struct {
 	SubServiceType string    `json:"subServiceType"`
@@ -110,6 +113,38 @@ func (s *sessionWrapper) SetActiveOrder(c context.Context, subServiceType string
 	}
 
 	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+}
+
+func (s sessionWrapper) InjectDataVersions(c context.Context) (context.Context, error) {
+	curSession, err := s.GetCurrentSession(c)
+	if err != nil {
+		return nil, err
+	}
+	versions, err := curSession.GetCacheVersions()
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.Marshal(versions)
+	if err != nil {
+		return nil, err
+	}
+	c = context.WithValue(c, DataVersionsKey, string(b))
+	return c, nil
+}
+
+func (s sessionWrapper) GetVersionsFromContext(c context.Context) (map[string]string, bool, error) {
+	v := c.Value(DataVersionsKey)
+	if v != nil {
+		return nil, false, nil
+	}
+
+	versions := make(map[string]string)
+	err := json.Unmarshal([]byte(v.(string)), &versions)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return versions, true, nil
 }
 
 func (s *sessionWrapper) SetCurrentSession(c context.Context, customerId string, activeOrderId string,
