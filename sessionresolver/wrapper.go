@@ -115,7 +115,7 @@ func (s *sessionWrapper) SetActiveOrder(c context.Context, subServiceType string
 	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
 }
 
-func (s sessionWrapper) InjectDataVersions(c context.Context) (context.Context, error) {
+func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
 	curSession, err := s.GetCurrentSession(c)
 	if err != nil {
 		return nil, err
