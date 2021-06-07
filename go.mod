@@ -3,5 +3,5 @@ module bitbucket.org/HeilaSystems/session
 go 1.14
 
 require (
-	bitbucket.org/HeilaSystems/dependencybundler v0.5.0
+	bitbucket.org/HeilaSystems/dependencybundler v0.6.0
 )
