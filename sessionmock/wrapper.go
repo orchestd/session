@@ -2,15 +2,32 @@ package sessionmock
 
 import (
 	"bitbucket.org/HeilaSystems/session"
+	"bitbucket.org/HeilaSystems/session/models"
 	"context"
 	"time"
 )
+
+// Session
+type ActiveOrder struct {
+	SubServiceType string    `json:"subServiceType"`
+	StoreId        string    `json:"storeId"`
+	TimeTo         time.Time `json:"timeTo"`
+	Tags           []string  `json:"tags"`
+}
+
 type currentSessionMock struct {
-	CustomerId             string            `json:"customerId"`
-	ActiveOrderId          string            `json:"activeOrderId"`
-	FakeNow                *string           `json:"fakeNow"`
-	CacheVersions          map[string]string `json:"cacheVersions"`
-	LatestCacheVersions func() map[string]string
+	CustomerId    string       `json:"customerId"`
+	ActiveOrderId string       `json:"activeOrderId"`
+	FakeNow       *string      `json:"fakeNow"`
+	ActiveOrder   *ActiveOrder `json:"activeOrder"`
+}
+
+func (c currentSessionMock) GetActiveOrder() (hasActiveOrder bool, subServiceType string, storeId string, timeTo time.Time, tags []string) {
+	if c.ActiveOrder != nil {
+		return true, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
+	} else {
+		return false, "", "", time.Time{}, nil
+	}
 }
 
 func (c currentSessionMock) GetActiveOrderId() string {
@@ -31,26 +48,48 @@ func (c currentSessionMock) GetNow() (time.Time, error) {
 	} else {
 		t := time.Now()
 		return t, nil
-	}}
+	}
+}
 
 func (c currentSessionMock) GetCacheVersions() (map[string]string, error) {
-	return c.LatestCacheVersions() , nil
+	return nil, nil
 }
 
+// Session resolver
 type sessionMockWrapper struct {
 	CurrentSessionToken string
-	CurrentSession currentSessionMock
+	CurrentSession      currentSessionMock
 }
 
-func NewSessionMockWrapper(currentSessionToken string,customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string ) session.SessionResolver {
+func (s *sessionMockWrapper) SetActiveOrder(c context.Context, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
+	s.CurrentSession.ActiveOrder = &ActiveOrder{
+		SubServiceType: subServiceType,
+		StoreId:        storeId,
+		TimeTo:         timeTo,
+		Tags:           tags,
+	}
+	return nil
+}
+
+func (s *sessionMockWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
+	return c, nil
+}
+
+func (s *sessionMockWrapper) GetVersionsFromContext(c context.Context) (models.Versions, bool, error) {
+	versions := make(models.Versions)
+	return versions, true, nil
+}
+
+func Test(ao ActiveOrder)error{
+	return nil
+}
+func NewSessionMockWrapper(currentSessionToken string, customerId string, activeOrderId string, fakeNow *string,
+	storeId string,timeTo time.Time,tags []string,
+) session.SessionResolver {
 	return &sessionMockWrapper{CurrentSessionToken: currentSessionToken, CurrentSession: currentSessionMock{
-		CustomerId:          customerId,
-		ActiveOrderId:       activeOrderId,
-		FakeNow:             fakeNow,
-		CacheVersions:       cacheVersions,
-		LatestCacheVersions: func() map[string]string {
-			return cacheVersions
-		},
+		CustomerId:    customerId,
+		ActiveOrderId: activeOrderId,
+		FakeNow:       fakeNow,
 	}}
 }
 
@@ -60,17 +99,13 @@ func (s *sessionMockWrapper) GetCurrentSession(context context.Context) (session
 
 func (s *sessionMockWrapper) SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error {
 	ms := currentSessionMock{
-		CustomerId:          customerId,
-		ActiveOrderId:      activeOrderId,
-		FakeNow:             fakeNow,
-		CacheVersions:       cacheVersions,
-		LatestCacheVersions: func() map[string]string {
-			return cacheVersions
-		},
+		CustomerId:    customerId,
+		ActiveOrderId: activeOrderId,
+		FakeNow:       fakeNow,
 	}
 	s.CurrentSession = ms
 	return nil
 }
 
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
-
+const DataVersionsKey = "versions"
