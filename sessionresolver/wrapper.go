@@ -17,20 +17,22 @@ const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 const DataVersionsKey = "versions"
 
-
 type ActiveOrder struct {
 	SubServiceType string    `json:"subServiceType"`
 	StoreId        string    `json:"storeId"`
 	TimeTo         time.Time `json:"timeTo"`
 	Tags           []string  `json:"tags"`
 }
-
+type Otp struct {
+	UUID string `json:"uuid"`
+}
 type CurrentSession struct {
 	CustomerId             string            `json:"customerId"`
 	ActiveOrderId          string            `json:"activeOrderId"`
 	FakeNow                *string           `json:"fakeNow"`
 	CacheVersions          map[string]string `json:"cacheVersions"`
 	ActiveOrder            *ActiveOrder      `json:"activeOrder"`
+	OtpData                *Otp              `json:"otpData"`
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
@@ -39,6 +41,13 @@ func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, subServiceType st
 		return true, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
 	} else {
 		return false, "", "", time.Time{}, nil
+	}
+}
+func (c CurrentSession) GetOtpData() string{
+	if c.OtpData!= nil {
+		return c.OtpData.UUID
+	} else {
+		return ""
 	}
 }
 
@@ -114,6 +123,14 @@ func (s *sessionWrapper) SetActiveOrder(c context.Context, subServiceType string
 	}
 
 	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+}
+func (s *sessionWrapper) SetOtpData(c context.Context , uuid string)error {
+	cSession , err := s.getCurrentSessionInt(c)
+	if err != nil {
+		return err
+	}
+	cSession.OtpData = &Otp{UUID: uuid}
+	return s.repo.InsertOrUpdate(c , cSession.GetCurrentCustomerId(), cSession)
 }
 
 func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
