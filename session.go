@@ -26,7 +26,7 @@ type Session interface {
 	GetNow() (time.Time, error)
 	GetCacheVersions() (map[string]string, error)
 	GetActiveOrder() (hasActiveOrder bool, subServiceType string, storeId string, timeTo time.Time, tags []string)
-	GetOtpData() *string
+	GetOtpData() string
 }
 
 type SessionRepo interface {

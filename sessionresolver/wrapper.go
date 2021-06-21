@@ -43,11 +43,11 @@ func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, subServiceType st
 		return false, "", "", time.Time{}, nil
 	}
 }
-func (c CurrentSession) GetOtpData() *string{
+func (c CurrentSession) GetOtpData() string{
 	if c.OtpData!= nil {
-		return &c.OtpData.UUID
+		return c.OtpData.UUID
 	} else {
-		return nil
+		return ""
 	}
 }
 
