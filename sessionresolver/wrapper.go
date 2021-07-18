@@ -13,6 +13,8 @@ type sessionWrapper struct {
 	repo session.SessionRepo
 }
 
+
+
 const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 const DataVersionsKey = "versions"
@@ -130,6 +132,15 @@ func (s *sessionWrapper) SetOtpData(c context.Context , uuid string)error {
 		return err
 	}
 	cSession.OtpData = &Otp{UUID: uuid}
+	return s.repo.InsertOrUpdate(c , cSession.GetCurrentCustomerId(), cSession)
+}
+
+func (s *sessionWrapper) SetCustomerId(c context.Context, customerId string) error {
+	cSession, err := s.getCurrentSessionInt(c)
+	if err != nil {
+		return err
+	}
+	cSession.CustomerId = customerId
 	return s.repo.InsertOrUpdate(c , cSession.GetCurrentCustomerId(), cSession)
 }
 
