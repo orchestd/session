@@ -3,6 +3,7 @@ package sessionresolver
 import (
 	"bitbucket.org/HeilaSystems/session"
 	"bitbucket.org/HeilaSystems/session/models"
+	"bitbucket.org/HeilaSystems/tokenauth"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -100,9 +101,12 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 
 func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
 	var order CurrentSession
-	if val, ok := c.Value(Token).(string); !ok {
-		return order, fmt.Errorf("tokenNotFound")
-	} else if err := s.repo.GetUserSessionByTokenToStruct(c, val, &order); err != nil {
+
+	if tokenData, ok := c.Value(tokenauth.TokenDataContextKey).(map[string]interface{}); !ok {
+		return order, fmt.Errorf("tokenDataNotFound")
+	} else if sessionId, ok := tokenData["sessionId"].(string); !ok{
+		return order, fmt.Errorf("sessionIdNotFound")
+	} else if err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &order); err != nil {
 		return order, err
 	} else {
 		order.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {
