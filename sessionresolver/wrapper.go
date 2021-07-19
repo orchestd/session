@@ -95,10 +95,10 @@ func (c CurrentSession) GetCacheVersions() (map[string]string, error) {
 	return c.CacheVersions, nil
 }
 
-func (sw sessionWrapper) GetSessionById(c context.Context, id string) (session.Session, error) {
+func (sw sessionWrapper) GetSessionById(c context.Context, id string) (bool, session.Session, error) {
 	s := CurrentSession{}
-	err := sw.repo.GetUserSessionByTokenToStruct(c, id, &s)
-	return s, err
+	ok, err := sw.repo.GetUserSessionByTokenToStruct(c, id, &s)
+	return ok, s, err
 }
 
 func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, error) {
@@ -112,7 +112,7 @@ func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession
 		return order, fmt.Errorf("tokenDataNotFound")
 	} else if sessionId, ok := tokenData["sessionId"].(string); !ok{
 		return order, fmt.Errorf("sessionIdNotFound")
-	} else if err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &order); err != nil {
+	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &order); err != nil {
 		return order, err
 	} else {
 		order.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {

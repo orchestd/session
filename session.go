@@ -19,7 +19,7 @@ type SessionResolver interface {
 	SetOtpData(c context.Context , uuid string)error
 	VersionsFromSessionToContext(c context.Context) (context.Context, error)
 	GetVersionsFromContext(c context.Context) (models.Versions, bool, error)
-	GetSessionById(c context.Context, id string) (Session, error)
+	GetSessionById(c context.Context, id string) (bool, Session, error)
 }
 
 type Session interface {
@@ -32,7 +32,7 @@ type Session interface {
 }
 
 type SessionRepo interface {
-	GetUserSessionByTokenToStruct(context context.Context, token string, dest interface{}) error
+	GetUserSessionByTokenToStruct(context context.Context, token string, dest interface{}) (bool, error)
 	InsertOrUpdate(ctx context.Context, id string, obj interface{}) error
 	GetCacheVersions(ctx context.Context, now time.Time) (map[string]string, error)
 }
