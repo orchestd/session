@@ -93,6 +93,10 @@ func NewSessionMockWrapper(currentSessionToken string, customerId string, active
 	}}
 }
 
+func (s *sessionMockWrapper) GetSessionById(c context.Context, id string) (bool, session.Session, error) {
+	return true, s.CurrentSession, nil
+}
+
 func (s *sessionMockWrapper) GetCurrentSession(context context.Context) (session.Session, error) {
 	return s.CurrentSession, nil
 }

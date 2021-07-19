@@ -19,11 +19,16 @@ func NewSessionCacheRepo(cacheGetter cache.CacheStorageGetterWrapper, cacheSette
 	return &cacheRepo{cacheGetter: cacheGetter, cacheSetter: cacheSetter, sessionCollectionName: collectionName, version: version}
 }
 
-func (r cacheRepo) GetUserSessionByTokenToStruct(c context.Context, token string, dest interface{}) error {
-	if err := r.cacheGetter.GetById(c, r.sessionCollectionName, token, r.version, dest); err != nil {
-		return err
+func (r cacheRepo) GetUserSessionByTokenToStruct(c context.Context, token string, dest interface{}) (bool, error) {
+	err := r.cacheGetter.GetById(c, r.sessionCollectionName, token, r.version, dest)
+	if err != nil {
+		if err.IsNotFound() {
+			return false, nil
+		} else {
+			return false, err
+		}
 	}
-	return nil
+	return true, nil
 }
 
 func (r cacheRepo) InsertOrUpdate(ctx context.Context, id string, obj interface{}) error {
