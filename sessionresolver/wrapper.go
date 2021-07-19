@@ -95,6 +95,12 @@ func (c CurrentSession) GetCacheVersions() (map[string]string, error) {
 	return c.CacheVersions, nil
 }
 
+func (sw sessionWrapper) GetSessionById(c context.Context, id string) (session.Session, error) {
+	s := CurrentSession{}
+	err := sw.repo.GetUserSessionByTokenToStruct(c, id, &s)
+	return s, err
+}
+
 func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, error) {
 	return s.getCurrentSessionInt(c)
 }
