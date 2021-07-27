@@ -107,10 +107,12 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 
 func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
 	var order CurrentSession
-
-	if tokenData, ok := c.Value(tokenauth.TokenDataContextKey).(map[string]interface{}); !ok {
+	tokenData := make(map[string]interface{})
+	if tokenDataJson, ok := c.Value(tokenauth.TokenDataContextKey).([]byte); !ok {
 		return order, fmt.Errorf("tokenDataNotFound")
-	} else if sessionId, ok := tokenData["sessionId"].(string); !ok{
+	} else if err := json.Unmarshal(tokenDataJson, &tokenData); err != nil{
+		return order, fmt.Errorf("tokenDataNotValidJSON")
+	} else if sessionId, ok := tokenData["sessionId"].(string); !ok {
 		return order, fmt.Errorf("sessionIdNotFound")
 	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &order); err != nil {
 		return order, err
