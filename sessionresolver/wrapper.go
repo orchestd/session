@@ -108,9 +108,9 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
 	var order CurrentSession
 	tokenData := make(map[string]interface{})
-	if tokenDataJson, ok := c.Value(tokenauth.TokenDataContextKey).([]byte); !ok {
+	if tokenDataJson, ok := c.Value(tokenauth.TokenDataContextKey).(string); !ok {
 		return order, fmt.Errorf("tokenDataNotFound")
-	} else if err := json.Unmarshal(tokenDataJson, &tokenData); err != nil{
+	} else if err := json.Unmarshal([]byte(tokenDataJson), &tokenData); err != nil{
 		return order, fmt.Errorf("tokenDataNotValidJSON")
 	} else if sessionId, ok := tokenData["sessionId"].(string); !ok {
 		return order, fmt.Errorf("sessionIdNotFound")
