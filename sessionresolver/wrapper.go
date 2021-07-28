@@ -14,21 +14,22 @@ type sessionWrapper struct {
 	repo session.SessionRepo
 }
 
-
-
 const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 const DataVersionsKey = "versions"
 
 type ActiveOrder struct {
+	Id             string    `json:"id"`
 	SubServiceType string    `json:"subServiceType"`
 	StoreId        string    `json:"storeId"`
 	TimeTo         time.Time `json:"timeTo"`
 	Tags           []string  `json:"tags"`
 }
+
 type Otp struct {
 	UUID string `json:"uuid"`
 }
+
 type CurrentSession struct {
 	CustomerId             string            `json:"customerId"`
 	ActiveOrderId          string            `json:"activeOrderId"`
@@ -39,15 +40,16 @@ type CurrentSession struct {
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
-func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, subServiceType string, storeId string, timeTo time.Time, tags []string) {
+func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string) {
 	if c.ActiveOrder != nil {
-		return true, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
+		return true, c.ActiveOrder.Id, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
 	} else {
-		return false, "", "", time.Time{}, nil
+		return false, "", "", "", time.Time{}, nil
 	}
 }
-func (c CurrentSession) GetOtpData() string{
-	if c.OtpData!= nil {
+
+func (c CurrentSession) GetOtpData() string {
+	if c.OtpData != nil {
 		return c.OtpData.UUID
 	} else {
 		return ""
@@ -110,7 +112,7 @@ func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession
 	tokenData := make(map[string]interface{})
 	if tokenDataJson, ok := c.Value(tokenauth.TokenDataContextKey).(string); !ok {
 		return order, fmt.Errorf("tokenDataNotFound")
-	} else if err := json.Unmarshal([]byte(tokenDataJson), &tokenData); err != nil{
+	} else if err := json.Unmarshal([]byte(tokenDataJson), &tokenData); err != nil {
 		return order, fmt.Errorf("tokenDataNotValidJSON")
 	} else if sessionId, ok := tokenData["sessionId"].(string); !ok {
 		return order, fmt.Errorf("sessionIdNotFound")
@@ -124,12 +126,13 @@ func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession
 	}
 }
 
-func (s *sessionWrapper) SetActiveOrder(c context.Context, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
+func (s *sessionWrapper) SetActiveOrder(c context.Context, id, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
 	cSession, err := s.getCurrentSessionInt(c)
 	if err != nil {
 		return err
 	}
 	cSession.ActiveOrder = &ActiveOrder{
+		Id:             id,
 		SubServiceType: subServiceType,
 		StoreId:        storeId,
 		TimeTo:         timeTo,
@@ -138,13 +141,13 @@ func (s *sessionWrapper) SetActiveOrder(c context.Context, subServiceType string
 
 	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
 }
-func (s *sessionWrapper) SetOtpData(c context.Context , uuid string)error {
-	cSession , err := s.getCurrentSessionInt(c)
+func (s *sessionWrapper) SetOtpData(c context.Context, uuid string) error {
+	cSession, err := s.getCurrentSessionInt(c)
 	if err != nil {
 		return err
 	}
 	cSession.OtpData = &Otp{UUID: uuid}
-	return s.repo.InsertOrUpdate(c , cSession.GetCurrentCustomerId(), cSession)
+	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
 }
 
 func (s *sessionWrapper) SetCustomerId(c context.Context, customerId string) error {
@@ -153,7 +156,7 @@ func (s *sessionWrapper) SetCustomerId(c context.Context, customerId string) err
 		return err
 	}
 	cSession.CustomerId = customerId
-	return s.repo.InsertOrUpdate(c , cSession.GetCurrentCustomerId(), cSession)
+	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
 }
 
 func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
