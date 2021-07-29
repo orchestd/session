@@ -27,7 +27,7 @@ type Session interface {
 	GetCurrentCustomerId() string
 	GetNow() (time.Time, error)
 	GetCacheVersions() (map[string]string, error)
-	GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string)
+	GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string)
 	GetOtpData() string
 }
 

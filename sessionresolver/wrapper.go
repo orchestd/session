@@ -19,11 +19,12 @@ const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 const DataVersionsKey = "versions"
 
 type ActiveOrder struct {
-	Id             string    `json:"id"`
-	SubServiceType string    `json:"subServiceType"`
-	StoreId        string    `json:"storeId"`
-	TimeTo         time.Time `json:"timeTo"`
-	Tags           []string  `json:"tags"`
+	Id             string            `json:"id"`
+	SubServiceType string            `json:"subServiceType"`
+	StoreId        string            `json:"storeId"`
+	TimeTo         time.Time         `json:"timeTo"`
+	Tags           []string          `json:"tags"`
+	Versions       map[string]string `json:"versions"`
 }
 
 type Otp struct {
@@ -40,11 +41,17 @@ type CurrentSession struct {
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
-func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string) {
+func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string) {
 	if c.ActiveOrder != nil {
-		return true, c.ActiveOrder.Id, c.ActiveOrder.SubServiceType, c.ActiveOrder.StoreId, c.ActiveOrder.TimeTo, c.ActiveOrder.Tags
+		return true,
+			c.ActiveOrder.Id,
+			c.ActiveOrder.SubServiceType,
+			c.ActiveOrder.StoreId,
+			c.ActiveOrder.TimeTo,
+			c.ActiveOrder.Tags,
+			c.ActiveOrder.Versions
 	} else {
-		return false, "", "", "", time.Time{}, nil
+		return false, "", "", "", time.Time{}, nil, nil
 	}
 }
 
@@ -131,16 +138,22 @@ func (s *sessionWrapper) SetActiveOrder(c context.Context, id, subServiceType st
 	if err != nil {
 		return err
 	}
+	versions, err := cSession.GetCacheVersions()
+	if err != nil {
+		return err
+	}
 	cSession.ActiveOrder = &ActiveOrder{
 		Id:             id,
 		SubServiceType: subServiceType,
 		StoreId:        storeId,
 		TimeTo:         timeTo,
 		Tags:           tags,
+		Versions:       versions,
 	}
 
 	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
 }
+
 func (s *sessionWrapper) SetOtpData(c context.Context, uuid string) error {
 	cSession, err := s.getCurrentSessionInt(c)
 	if err != nil {
@@ -164,10 +177,19 @@ func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context
 	if err != nil {
 		return nil, err
 	}
+
 	versions, err := curSession.GetCacheVersions()
 	if err != nil {
 		return nil, err
 	}
+
+	ok, _, _, _, _, _, orderVersions := curSession.GetActiveOrder()
+	if ok && versions != nil {
+		for key, val := range orderVersions {
+			versions[key] = val
+		}
+	}
+
 	b, err := json.Marshal(versions)
 	if err != nil {
 		return nil, err
