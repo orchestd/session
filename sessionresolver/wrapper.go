@@ -114,15 +114,36 @@ func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, 
 	return s.getCurrentSessionInt(c)
 }
 
-func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
-	var order CurrentSession
+func (s *sessionWrapper) GetTokenData(c context.Context) (map[string]interface{}, error) {
 	tokenData := make(map[string]interface{})
 	if tokenDataJson, ok := c.Value(tokenauth.TokenDataContextKey).(string); !ok {
-		return order, fmt.Errorf("tokenDataNotFound")
+		return nil, fmt.Errorf("tokenDataNotFound")
 	} else if err := json.Unmarshal([]byte(tokenDataJson), &tokenData); err != nil {
-		return order, fmt.Errorf("tokenDataNotValidJSON")
-	} else if sessionId, ok := tokenData["sessionId"].(string); !ok {
-		return order, fmt.Errorf("sessionIdNotFound")
+		return nil, fmt.Errorf("tokenDataNotValidJSON")
+	}
+	return tokenData, nil
+}
+
+func (s *sessionWrapper) GetTokenDataValueAsString(c context.Context, key string) (string, error) {
+	tokenData, err := s.GetTokenData(c)
+	if err != nil {
+		return "", err
+	}
+	val, ok := tokenData[key]
+	if !ok {
+		return "", fmt.Errorf("valueInTokenDataNotFound")
+	}
+	strVal, ok := val.(string)
+	if !ok {
+		return "", fmt.Errorf("valueIsNotString")
+	}
+	return strVal, nil
+}
+
+func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
+	var order CurrentSession
+	if sessionId, err := s.GetTokenDataValueAsString(c, "sessionId"); err != nil {
+		return order, err
 	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &order); err != nil {
 		return order, err
 	} else {
@@ -213,7 +234,7 @@ func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versio
 	return versions, true, nil
 }
 
-func (s *sessionWrapper) SetCurrentSession(c context.Context, customerId string, activeOrderId string,
+func (s *sessionWrapper) SetCurrentSession(c context.Context, sessionId, customerId string, activeOrderId string,
 	fakeNow *string, cacheVersions map[string]string) error {
 	cSession := CurrentSession{
 		CustomerId:    customerId,
@@ -224,5 +245,5 @@ func (s *sessionWrapper) SetCurrentSession(c context.Context, customerId string,
 			return s.repo.GetCacheVersions(c, now)
 		},
 	}
-	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+	return s.repo.InsertOrUpdate(c, sessionId, cSession)
 }
