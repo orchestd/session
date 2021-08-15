@@ -141,16 +141,16 @@ func (s *sessionWrapper) GetTokenDataValueAsString(c context.Context, key string
 }
 
 func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
-	var order CurrentSession
+	var currentSession CurrentSession
 	if sessionId, err := s.GetTokenDataValueAsString(c, "sessionId"); err != nil {
-		return order, err
-	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &order); err != nil {
-		return order, err
+		return currentSession, err
+	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &currentSession); err != nil {
+		return currentSession, err
 	} else {
-		order.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {
+		currentSession.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {
 			return s.repo.GetCacheVersions(c, now)
 		}
-		return order, nil
+		return currentSession, nil
 	}
 }
 
