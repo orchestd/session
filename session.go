@@ -13,13 +13,14 @@ type SessionResolverBuilder interface {
 
 type SessionResolver interface {
 	GetCurrentSession(context context.Context) (Session, error)
-	SetCurrentSession(c context.Context, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
+	SetCurrentSession(c context.Context, sessionId, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
 	SetActiveOrder(c context.Context, id, subServiceType string, storeId string, timeTo time.Time, tags []string) error
-	SetCustomerId(c context.Context,customerId string) error
-	SetOtpData(c context.Context , uuid string)error
+	SetCustomerId(c context.Context, customerId string) error
+	SetOtpData(c context.Context, uuid string) error
 	VersionsFromSessionToContext(c context.Context) (context.Context, error)
 	GetVersionsFromContext(c context.Context) (models.Versions, bool, error)
 	GetSessionById(c context.Context, id string) (bool, Session, error)
+	GetTokenDataValueAsString(c context.Context, key string) (string, error)
 }
 
 type Session interface {
