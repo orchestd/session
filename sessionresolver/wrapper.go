@@ -71,6 +71,10 @@ func (c CurrentSession) GetCurrentCustomerId() string {
 	return c.CustomerId
 }
 
+func (c CurrentSession) HasFakeNow() bool {
+	return c.FakeNow != nil
+}
+
 func (c CurrentSession) GetNow() (time.Time, error) {
 	if c.FakeNow != nil {
 		if t, err := time.Parse(TimeLayoutYYYYMMDD_HHMMSS, *c.FakeNow); err != nil {
@@ -154,16 +158,45 @@ func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession
 	}
 }
 
+func (s *sessionWrapper) SetActiveOrderForSession(c context.Context, sessionId, orderId, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
+	ok, cSession, err := s.GetSessionById(c, sessionId)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("session with id %s not found", sessionId)
+	}
+
+	err = s.setActiveOrder(c, sessionId, cSession.(CurrentSession), orderId, subServiceType, storeId, timeTo, tags)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *sessionWrapper) SetActiveOrder(c context.Context, id, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
 	cSession, err := s.getCurrentSessionInt(c)
 	if err != nil {
 		return err
 	}
-	versions, err := cSession.GetCacheVersions()
+	sessionId, err := s.GetTokenDataValueAsString(c, "sessionId")
 	if err != nil {
 		return err
 	}
-	cSession.ActiveOrder = &ActiveOrder{
+	err = s.setActiveOrder(c, sessionId, cSession, id, subServiceType, storeId, timeTo, tags)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *sessionWrapper) setActiveOrder(c context.Context, sessionId string, currentSession CurrentSession, id,
+	subServiceType string, storeId string, timeTo time.Time, tags []string) error {
+	versions, err := currentSession.GetCacheVersions()
+	if err != nil {
+		return err
+	}
+	currentSession.ActiveOrder = &ActiveOrder{
 		Id:             id,
 		SubServiceType: subServiceType,
 		StoreId:        storeId,
@@ -171,8 +204,7 @@ func (s *sessionWrapper) SetActiveOrder(c context.Context, id, subServiceType st
 		Tags:           tags,
 		Versions:       versions,
 	}
-
-	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+	return s.repo.InsertOrUpdate(c, sessionId, currentSession)
 }
 
 func (s *sessionWrapper) SetOtpData(c context.Context, uuid string) error {
