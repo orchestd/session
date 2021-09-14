@@ -34,7 +34,7 @@ type Otp struct {
 type CustomerStatus int
 
 const (
-	UnknownCustomer CustomerStatus = iota
+	NoCustomer CustomerStatus = iota
 	NewCustomer
 	ExistingCustomer
 )
@@ -77,7 +77,7 @@ func (c CurrentSession) GetActiveOrderId() string {
 }
 
 func (c CurrentSession) GetIsCustomerUnknown() bool {
-	return c.CustomerStatus == UnknownCustomer
+	return c.CustomerStatus == NoCustomer
 }
 
 func (c CurrentSession) GetIsCustomerNew() bool {
@@ -287,7 +287,7 @@ func (s *sessionWrapper) SetCurrentSession(c context.Context, sessionId, custome
 	isUnknownCustomer, isNewCustomer bool, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error {
 	customerStatus := ExistingCustomer
 	if isUnknownCustomer {
-		customerStatus = UnknownCustomer
+		customerStatus = NoCustomer
 	} else if isNewCustomer {
 		customerStatus = NewCustomer
 	}

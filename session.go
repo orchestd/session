@@ -32,7 +32,7 @@ type Session interface {
 	GetCacheVersions() (map[string]string, error)
 	GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string)
 	GetOtpData() string
-	GetIsCustomerUnknown() bool
+	GetIsNoCustomer() bool
 	GetIsCustomerNew() bool
 }
 
