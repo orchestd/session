@@ -13,7 +13,7 @@ type SessionResolverBuilder interface {
 
 type SessionResolver interface {
 	GetCurrentSession(context context.Context) (Session, error)
-	SetCurrentSession(c context.Context, sessionId, customerId string, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
+	SetCurrentSession(c context.Context, sessionId, customerId string, isUnknownCustomer, isNewCustomer bool, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error
 	SetActiveOrder(c context.Context, id, subServiceType string, storeId string, timeTo time.Time, tags []string) error
 	SetActiveOrderForSession(c context.Context, sessionId, orderId, subServiceType string, storeId string, timeTo time.Time, tags []string) error
 	SetCustomerId(c context.Context, customerId string) error
@@ -32,6 +32,8 @@ type Session interface {
 	GetCacheVersions() (map[string]string, error)
 	GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string)
 	GetOtpData() string
+	GetIsCustomerUnknown() bool
+	GetIsCustomerNew() bool
 }
 
 type SessionRepo interface {
