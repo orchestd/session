@@ -31,6 +31,14 @@ type Otp struct {
 	UUID string `json:"uuid"`
 }
 
+type CustomerStatus int
+
+const (
+	NoCustomer CustomerStatus = iota
+	NewCustomer
+	ExistingCustomer
+)
+
 type CurrentSession struct {
 	CustomerId             string            `json:"customerId"`
 	ActiveOrderId          string            `json:"activeOrderId"`
@@ -38,6 +46,7 @@ type CurrentSession struct {
 	CacheVersions          map[string]string `json:"cacheVersions"`
 	ActiveOrder            *ActiveOrder      `json:"activeOrder"`
 	OtpData                *Otp              `json:"otpData"`
+	CustomerStatus         CustomerStatus    `json:"customerStatus"`
 	getLatestCacheVersions func(time.Time) (map[string]string, error)
 }
 
@@ -65,6 +74,14 @@ func (c CurrentSession) GetOtpData() string {
 
 func (c CurrentSession) GetActiveOrderId() string {
 	return c.ActiveOrderId
+}
+
+func (c CurrentSession) GetIsNoCustomer() bool {
+	return c.CustomerStatus == NoCustomer
+}
+
+func (c CurrentSession) GetIsCustomerNew() bool {
+	return c.CustomerStatus == NewCustomer
 }
 
 func (c CurrentSession) GetCurrentCustomerId() string {
@@ -266,10 +283,17 @@ func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versio
 	return versions, true, nil
 }
 
-func (s *sessionWrapper) SetCurrentSession(c context.Context, sessionId, customerId string, activeOrderId string,
-	fakeNow *string, cacheVersions map[string]string) error {
+func (s *sessionWrapper) SetCurrentSession(c context.Context, sessionId, customerId string,
+	isNoCustomer, isNewCustomer bool, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error {
+	customerStatus := ExistingCustomer
+	if isNoCustomer {
+		customerStatus = NoCustomer
+	} else if isNewCustomer {
+		customerStatus = NewCustomer
+	}
 	cSession := CurrentSession{
 		CustomerId:    customerId,
+		CustomerStatus: customerStatus,
 		ActiveOrderId: activeOrderId,
 		FakeNow:       fakeNow,
 		CacheVersions: cacheVersions,
