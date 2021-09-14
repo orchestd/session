@@ -76,7 +76,7 @@ func (c CurrentSession) GetActiveOrderId() string {
 	return c.ActiveOrderId
 }
 
-func (c CurrentSession) GetIsCustomerUnknown() bool {
+func (c CurrentSession) GetIsNoCustomer() bool {
 	return c.CustomerStatus == NoCustomer
 }
 
@@ -284,9 +284,9 @@ func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versio
 }
 
 func (s *sessionWrapper) SetCurrentSession(c context.Context, sessionId, customerId string,
-	isUnknownCustomer, isNewCustomer bool, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error {
+	isNoCustomer, isNewCustomer bool, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error {
 	customerStatus := ExistingCustomer
-	if isUnknownCustomer {
+	if isNoCustomer {
 		customerStatus = NoCustomer
 	} else if isNewCustomer {
 		customerStatus = NewCustomer
