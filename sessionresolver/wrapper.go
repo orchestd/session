@@ -230,7 +230,11 @@ func (s *sessionWrapper) SetOtpData(c context.Context, uuid string) error {
 		return err
 	}
 	cSession.OtpData = &Otp{UUID: uuid}
-	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+	sessionId, err := s.GetTokenDataValueAsString(c, "sessionId")
+	if err != nil {
+		return err
+	}
+	return s.repo.InsertOrUpdate(c, sessionId, cSession)
 }
 
 func (s *sessionWrapper) SetCustomerId(c context.Context, customerId string) error {
@@ -239,7 +243,11 @@ func (s *sessionWrapper) SetCustomerId(c context.Context, customerId string) err
 		return err
 	}
 	cSession.CustomerId = customerId
-	return s.repo.InsertOrUpdate(c, cSession.GetCurrentCustomerId(), cSession)
+	sessionId, err := s.GetTokenDataValueAsString(c, "sessionId")
+	if err != nil {
+		return err
+	}
+	return s.repo.InsertOrUpdate(c, sessionId, cSession)
 }
 
 func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
