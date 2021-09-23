@@ -14,7 +14,6 @@ type sessionWrapper struct {
 	repo session.SessionRepo
 }
 
-const Token = "token"
 const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 const DataVersionsKey = "versions"
 
@@ -39,18 +38,60 @@ const (
 	ExistingCustomer
 )
 
-type CurrentSession struct {
-	CustomerId             string            `json:"customerId"`
-	ActiveOrderId          string            `json:"activeOrderId"`
-	FakeNow                *string           `json:"fakeNow"`
-	CacheVersions          map[string]string `json:"cacheVersions"`
-	ActiveOrder            *ActiveOrder      `json:"activeOrder"`
-	OtpData                *Otp              `json:"otpData"`
-	CustomerStatus         CustomerStatus    `json:"customerStatus"`
-	getLatestCacheVersions func(time.Time) (map[string]string, error)
+type currentSession struct {
+	Id             string
+	CustomerId     string
+	ActiveOrderId  string
+	FakeNow        *time.Time
+	CacheVersions  map[string]string
+	ActiveOrder    *ActiveOrder
+	OtpData        *Otp
+	CustomerStatus CustomerStatus
 }
 
-func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string) {
+func (c *currentSession) SetCustomerDetails(id string, isNew bool) {
+	c.CustomerId = id
+	if id == "" {
+		c.CustomerStatus = NoCustomer
+	} else if isNew {
+		c.CustomerStatus = NewCustomer
+	} else {
+		c.CustomerStatus = ExistingCustomer
+	}
+}
+
+func (c *currentSession) SetOtpData(uuid string) {
+	c.OtpData = &Otp{UUID: uuid}
+}
+
+func (c *currentSession) SetActiveOrder(id, subServiceType, storeId string, timeTo time.Time, tags []string) {
+	c.ActiveOrder = &ActiveOrder{
+		Id:             id,
+		StoreId:        storeId,
+		TimeTo:         timeTo,
+		SubServiceType: subServiceType,
+		Tags:           tags,
+	}
+}
+
+func (c *currentSession) SetFakeNow(fakeNow time.Time) {
+	c.FakeNow = &fakeNow
+}
+
+func (c *currentSession) SetFixedCacheVersions(versions map[string]string) {
+	if c.CacheVersions == nil {
+		c.CacheVersions = make(map[string]string)
+	}
+	for collection, version := range versions {
+		c.CacheVersions[collection] = version
+	}
+}
+
+func (c currentSession) GetFixedCacheVersions() map[string]string {
+	return c.CacheVersions
+}
+
+func (c currentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string) {
 	if c.ActiveOrder != nil {
 		return true,
 			c.ActiveOrder.Id,
@@ -64,7 +105,7 @@ func (c CurrentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceTyp
 	}
 }
 
-func (c CurrentSession) GetOtpData() string {
+func (c currentSession) GetOtpData() string {
 	if c.OtpData != nil {
 		return c.OtpData.UUID
 	} else {
@@ -72,67 +113,62 @@ func (c CurrentSession) GetOtpData() string {
 	}
 }
 
-func (c CurrentSession) GetActiveOrderId() string {
+func (c currentSession) GetActiveOrderId() string {
 	return c.ActiveOrderId
 }
 
-func (c CurrentSession) GetIsNoCustomer() bool {
+func (c currentSession) GetIsNoCustomer() bool {
 	return c.CustomerStatus == NoCustomer
 }
 
-func (c CurrentSession) GetIsCustomerNew() bool {
+func (c currentSession) GetIsCustomerNew() bool {
 	return c.CustomerStatus == NewCustomer
 }
 
-func (c CurrentSession) GetCurrentCustomerId() string {
+func (c currentSession) GetCustomerId() string {
 	return c.CustomerId
 }
 
-func (c CurrentSession) HasFakeNow() bool {
+func (c currentSession) HasFakeNow() bool {
 	return c.FakeNow != nil
 }
 
-func (c CurrentSession) GetNow() (time.Time, error) {
+func (c currentSession) GetNow() time.Time {
 	if c.FakeNow != nil {
-		if t, err := time.Parse(TimeLayoutYYYYMMDD_HHMMSS, *c.FakeNow); err != nil {
-			return time.Time{}, err
-		} else {
-			return t, nil
-		}
+		return *c.FakeNow
 	} else {
-		t := time.Now()
-		return t, nil
+		return time.Now()
 	}
 }
 
-func (c CurrentSession) GetCacheVersions() (map[string]string, error) {
-	now, err := c.GetNow()
-	if err != nil {
-		return nil, err
-	}
-	versions, err := c.getLatestCacheVersions(now)
-	if err != nil {
-		return nil, err
-	}
-	if c.CacheVersions == nil {
-		c.CacheVersions = make(map[string]string)
-	}
-	for collection, version := range versions {
-		if _, ok := c.CacheVersions[collection]; !ok {
-			c.CacheVersions[collection] = version
-		}
-	}
-	return c.CacheVersions, nil
+func (c currentSession) GetId() string {
+	return c.Id
+}
+
+func (sw sessionWrapper) NewSession(id string) session.Session {
+	newCurrentSession := &currentSession{Id: id, CustomerStatus: NoCustomer}
+	return newCurrentSession
+}
+
+func (sw sessionWrapper) SaveSession(c context.Context, cSession session.Session) error {
+	return sw.repo.InsertOrUpdate(c, cSession.GetId(), cSession)
 }
 
 func (sw sessionWrapper) GetSessionById(c context.Context, id string) (bool, session.Session, error) {
-	s := CurrentSession{}
+	s := currentSession{}
 	ok, err := sw.repo.GetUserSessionByTokenToStruct(c, id, &s)
-	return ok, s, err
+	return ok, &s, err
 }
 
 func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, error) {
-	return s.getCurrentSessionInt(c)
+	var currentSession currentSession
+	if sessionId, err := s.GetTokenDataValueAsString(c, "sessionId"); err != nil {
+		return nil, err
+	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, currentSession); err != nil {
+		return nil, err
+	} else {
+		return &currentSession, nil
+	}
 }
 
 func (s *sessionWrapper) GetTokenData(c context.Context) (map[string]interface{}, error) {
@@ -161,111 +197,34 @@ func (s *sessionWrapper) GetTokenDataValueAsString(c context.Context, key string
 	return strVal, nil
 }
 
-func (s *sessionWrapper) getCurrentSessionInt(c context.Context) (CurrentSession, error) {
-	var currentSession CurrentSession
-	if sessionId, err := s.GetTokenDataValueAsString(c, "sessionId"); err != nil {
-		return currentSession, err
-	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &currentSession); err != nil {
-		return currentSession, err
-	} else {
-		currentSession.getLatestCacheVersions = func(now time.Time) (map[string]string, error) {
-			return s.repo.GetCacheVersions(c, now)
-		}
-		return currentSession, nil
-	}
-}
-
-func (s *sessionWrapper) SetActiveOrderForSession(c context.Context, sessionId, orderId, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
-	ok, cSession, err := s.GetSessionById(c, sessionId)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return fmt.Errorf("session with id %s not found", sessionId)
-	}
-
-	err = s.setActiveOrder(c, sessionId, cSession.(CurrentSession), orderId, subServiceType, storeId, timeTo, tags)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *sessionWrapper) SetActiveOrder(c context.Context, id, subServiceType string, storeId string, timeTo time.Time, tags []string) error {
-	cSession, err := s.getCurrentSessionInt(c)
-	if err != nil {
-		return err
-	}
-	sessionId, err := s.GetTokenDataValueAsString(c, "sessionId")
-	if err != nil {
-		return err
-	}
-	err = s.setActiveOrder(c, sessionId, cSession, id, subServiceType, storeId, timeTo, tags)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *sessionWrapper) setActiveOrder(c context.Context, sessionId string, currentSession CurrentSession, id,
-	subServiceType string, storeId string, timeTo time.Time, tags []string) error {
-	versions, err := currentSession.GetCacheVersions()
-	if err != nil {
-		return err
-	}
-	currentSession.ActiveOrder = &ActiveOrder{
-		Id:             id,
-		SubServiceType: subServiceType,
-		StoreId:        storeId,
-		TimeTo:         timeTo,
-		Tags:           tags,
-		Versions:       versions,
-	}
-	return s.repo.InsertOrUpdate(c, sessionId, currentSession)
-}
-
-func (s *sessionWrapper) SetOtpData(c context.Context, uuid string) error {
-	cSession, err := s.getCurrentSessionInt(c)
-	if err != nil {
-		return err
-	}
-	cSession.OtpData = &Otp{UUID: uuid}
-	sessionId, err := s.GetTokenDataValueAsString(c, "sessionId")
-	if err != nil {
-		return err
-	}
-	return s.repo.InsertOrUpdate(c, sessionId, cSession)
-}
-
-func (s *sessionWrapper) SetCustomerId(c context.Context, customerId string) error {
-	cSession, err := s.getCurrentSessionInt(c)
-	if err != nil {
-		return err
-	}
-	cSession.CustomerId = customerId
-	sessionId, err := s.GetTokenDataValueAsString(c, "sessionId")
-	if err != nil {
-		return err
-	}
-	return s.repo.InsertOrUpdate(c, sessionId, cSession)
-}
-
 func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
 	curSession, err := s.GetCurrentSession(c)
 	if err != nil {
 		return nil, err
 	}
 
-	versions, err := curSession.GetCacheVersions()
+	versions := make(map[string]string)
+
+	fixedVersions := curSession.GetFixedCacheVersions()
+
+	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow())
 	if err != nil {
 		return nil, err
 	}
 
+	for collection, ver := range versionsForDate {
+		versions[collection] = ver
+	}
+
 	ok, _, _, _, _, _, orderVersions := curSession.GetActiveOrder()
-	if ok && versions != nil {
+	if ok {
 		for key, val := range orderVersions {
 			versions[key] = val
 		}
+	}
+
+	for collection, ver := range fixedVersions {
+		versions[collection] = ver
 	}
 
 	b, err := json.Marshal(versions)
@@ -289,25 +248,4 @@ func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versio
 	}
 
 	return versions, true, nil
-}
-
-func (s *sessionWrapper) SetCurrentSession(c context.Context, sessionId, customerId string,
-	isNoCustomer, isNewCustomer bool, activeOrderId string, fakeNow *string, cacheVersions map[string]string) error {
-	customerStatus := ExistingCustomer
-	if isNoCustomer {
-		customerStatus = NoCustomer
-	} else if isNewCustomer {
-		customerStatus = NewCustomer
-	}
-	cSession := CurrentSession{
-		CustomerId:    customerId,
-		CustomerStatus: customerStatus,
-		ActiveOrderId: activeOrderId,
-		FakeNow:       fakeNow,
-		CacheVersions: cacheVersions,
-		getLatestCacheVersions: func(now time.Time) (map[string]string, error) {
-			return s.repo.GetCacheVersions(c, now)
-		},
-	}
-	return s.repo.InsertOrUpdate(c, sessionId, cSession)
 }
