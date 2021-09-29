@@ -19,18 +19,18 @@ type SessionResolver interface {
 	NewSession(id string) Session
 	SaveSession(c context.Context, cSession Session) error
 	GetCurrentSession(c context.Context) (Session, error)
+	FreezeCacheVersionsForSession(c context.Context, curSession Session) error
 }
 
 type Session interface {
 	SetCustomerDetails(id string, isNew bool)
 	SetOtpData(uuid string)
-	SetActiveOrder(id, subServiceType, storeId string, timeTo time.Time, tags []string)
 	SetFakeNow(fakeNow time.Time)
-	SetFixedCacheVersions(versions map[string]string)
 	GetFixedCacheVersions() map[string]string
-	GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string)
+	SetFixedCacheVersions(versions map[string]string)
+	GetCurrentCacheVersions() map[string]string
+	SetCurrentCacheVersions(versions map[string]string)
 	GetOtpData() string
-	GetActiveOrderId() string
 	GetIsNoCustomer() bool
 	GetIsCustomerNew() bool
 	GetCustomerId() string

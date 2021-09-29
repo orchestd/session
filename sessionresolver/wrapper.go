@@ -14,7 +14,6 @@ type sessionWrapper struct {
 	repo session.SessionRepo
 }
 
-const TimeLayoutYYYYMMDD_HHMMSS = "2006-01-02 15:04:05"
 const DataVersionsKey = "versions"
 
 type ActiveOrder struct {
@@ -39,14 +38,15 @@ const (
 )
 
 type currentSession struct {
-	Id             string
-	CustomerId     string
-	ActiveOrderId  string
-	FakeNow        *time.Time
-	CacheVersions  map[string]string
-	ActiveOrder    *ActiveOrder
-	OtpData        *Otp
-	CustomerStatus CustomerStatus
+	Id                   string
+	CustomerId           string
+	ActiveOrderId        string
+	FakeNow              *time.Time
+	FixedCacheVersions   map[string]string
+	CurrentCacheVersions map[string]string
+	ActiveOrder          *ActiveOrder
+	OtpData              *Otp
+	CustomerStatus       CustomerStatus
 }
 
 func (c *currentSession) SetCustomerDetails(id string, isNew bool) {
@@ -64,45 +64,30 @@ func (c *currentSession) SetOtpData(uuid string) {
 	c.OtpData = &Otp{UUID: uuid}
 }
 
-func (c *currentSession) SetActiveOrder(id, subServiceType, storeId string, timeTo time.Time, tags []string) {
-	c.ActiveOrder = &ActiveOrder{
-		Id:             id,
-		StoreId:        storeId,
-		TimeTo:         timeTo,
-		SubServiceType: subServiceType,
-		Tags:           tags,
-	}
-}
-
 func (c *currentSession) SetFakeNow(fakeNow time.Time) {
 	c.FakeNow = &fakeNow
 }
 
 func (c *currentSession) SetFixedCacheVersions(versions map[string]string) {
-	if c.CacheVersions == nil {
-		c.CacheVersions = make(map[string]string)
-	}
+	c.FixedCacheVersions = make(map[string]string)
 	for collection, version := range versions {
-		c.CacheVersions[collection] = version
+		c.FixedCacheVersions[collection] = version
 	}
+}
+
+func (c *currentSession) SetCurrentCacheVersions(versions map[string]string) {
+	c.CurrentCacheVersions = make(map[string]string)
+	for collection, version := range versions {
+		c.CurrentCacheVersions[collection] = version
+	}
+}
+
+func (c currentSession) GetCurrentCacheVersions() map[string]string {
+	return c.CurrentCacheVersions
 }
 
 func (c currentSession) GetFixedCacheVersions() map[string]string {
-	return c.CacheVersions
-}
-
-func (c currentSession) GetActiveOrder() (hasActiveOrder bool, id, subServiceType string, storeId string, timeTo time.Time, tags []string, cacheVersions map[string]string) {
-	if c.ActiveOrder != nil {
-		return true,
-			c.ActiveOrder.Id,
-			c.ActiveOrder.SubServiceType,
-			c.ActiveOrder.StoreId,
-			c.ActiveOrder.TimeTo,
-			c.ActiveOrder.Tags,
-			c.ActiveOrder.Versions
-	} else {
-		return false, "", "", "", time.Time{}, nil, nil
-	}
+	return c.FixedCacheVersions
 }
 
 func (c currentSession) GetOtpData() string {
@@ -111,10 +96,6 @@ func (c currentSession) GetOtpData() string {
 	} else {
 		return ""
 	}
-}
-
-func (c currentSession) GetActiveOrderId() string {
-	return c.ActiveOrderId
 }
 
 func (c currentSession) GetIsNoCustomer() bool {
@@ -152,6 +133,27 @@ func (sw sessionWrapper) NewSession(id string) session.Session {
 
 func (sw sessionWrapper) SaveSession(c context.Context, cSession session.Session) error {
 	return sw.repo.InsertOrUpdate(c, cSession.GetId(), cSession)
+}
+
+func (sw sessionWrapper) FreezeCacheVersionsForSession(c context.Context, curSession session.Session) error {
+	versions := make(map[string]string)
+	fixedVersions := curSession.GetFixedCacheVersions()
+	versionsForDate, err := sw.repo.GetCacheVersions(c, curSession.GetNow())
+	if err != nil {
+		return err
+	}
+	for collection, ver := range versionsForDate {
+		versions[collection] = ver
+	}
+	for collection, ver := range fixedVersions {
+		versions[collection] = ver
+	}
+	curSession.SetCurrentCacheVersions(versions)
+	err = sw.SaveSession(c, curSession)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (sw sessionWrapper) GetSessionById(c context.Context, id string) (bool, session.Session, error) {
@@ -202,30 +204,7 @@ func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context
 	if err != nil {
 		return nil, err
 	}
-
-	versions := make(map[string]string)
-
-	fixedVersions := curSession.GetFixedCacheVersions()
-
-	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow())
-	if err != nil {
-		return nil, err
-	}
-
-	for collection, ver := range versionsForDate {
-		versions[collection] = ver
-	}
-
-	ok, _, _, _, _, _, orderVersions := curSession.GetActiveOrder()
-	if ok {
-		for key, val := range orderVersions {
-			versions[key] = val
-		}
-	}
-
-	for collection, ver := range fixedVersions {
-		versions[collection] = ver
-	}
+	versions := curSession.GetCurrentCacheVersions()
 
 	b, err := json.Marshal(versions)
 	if err != nil {
