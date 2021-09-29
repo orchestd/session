@@ -228,3 +228,15 @@ func (s sessionWrapper) GetVersionsFromContext(c context.Context) (models.Versio
 
 	return versions, true, nil
 }
+
+func (s sessionWrapper) GetVersionForCollectionFromContext(c context.Context, collectionName string) (string, error) {
+	versions, _, err := s.GetVersionsFromContext(c)
+	if err != nil {
+		return "", err
+	}
+	ver, ok := versions[collectionName]
+	if !ok {
+		return "", fmt.Errorf("latest version for collection %v not  found", collectionName)
+	}
+	return ver, nil
+}

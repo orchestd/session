@@ -20,6 +20,7 @@ type SessionResolver interface {
 	SaveSession(c context.Context, cSession Session) error
 	GetCurrentSession(c context.Context) (Session, error)
 	FreezeCacheVersionsForSession(c context.Context, curSession Session) error
+	GetVersionForCollectionFromContext(c context.Context, collectionName string) (string, error)
 }
 
 type Session interface {
