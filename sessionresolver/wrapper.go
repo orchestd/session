@@ -172,13 +172,13 @@ func (sw sessionWrapper) GetSessionById(c context.Context, id string) (bool, ses
 }
 
 func (s *sessionWrapper) GetCurrentSession(c context.Context) (session.Session, error) {
-	var currentSession *currentSession
+	var currentSession currentSession
 	if sessionId, err := s.GetTokenDataValueAsString(c, "sessionId"); err != nil {
 		return nil, err
-	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, currentSession); err != nil {
+	} else if _, err := s.repo.GetUserSessionByTokenToStruct(c, sessionId, &currentSession); err != nil {
 		return nil, err
 	} else {
-		return currentSession, nil
+		return &currentSession, nil
 	}
 }
 
