@@ -47,6 +47,7 @@ type currentSession struct {
 	ActiveOrder          *ActiveOrder
 	OtpData              *Otp
 	CustomerStatus       CustomerStatus
+	Lang                 string
 }
 
 func (c *currentSession) SetCustomerDetails(id string, isNew bool) {
@@ -124,6 +125,14 @@ func (c currentSession) GetNow() time.Time {
 
 func (c currentSession) GetId() string {
 	return c.Id
+}
+
+func (c currentSession) SetLang(lang string) {
+	c.Lang = lang
+}
+
+func (c currentSession) GetLang() string {
+	return c.Lang
 }
 
 func (sw sessionWrapper) NewSession(id string) session.Session {
