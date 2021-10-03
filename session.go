@@ -38,6 +38,8 @@ type Session interface {
 	HasFakeNow() bool
 	GetNow() time.Time
 	GetId() string
+	SetLang(lang string)
+	GetLang() string
 }
 
 type SessionRepo interface {
