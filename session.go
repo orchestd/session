@@ -21,6 +21,7 @@ type SessionResolver interface {
 	GetCurrentSession(c context.Context) (Session, error)
 	FreezeCacheVersionsForSession(c context.Context, curSession Session) error
 	GetVersionForCollectionFromContext(c context.Context, collectionName string) (string, error)
+	IsObsolete (c context.Context, sessionId string) (bool, error)
 }
 
 type Session interface {

@@ -249,3 +249,8 @@ func (s sessionWrapper) GetVersionForCollectionFromContext(c context.Context, co
 	}
 	return ver, nil
 }
+
+func (s sessionWrapper) IsObsolete(c context.Context, sessionId string) (bool, error) {
+	ok, _, err := s.GetSessionById(c, sessionId)
+	return !ok, err
+}
