@@ -127,7 +127,7 @@ func (c currentSession) GetId() string {
 	return c.Id
 }
 
-func (c currentSession) SetLang(lang string) {
+func (c *currentSession) SetLang(lang string) {
 	c.Lang = lang
 }
 
