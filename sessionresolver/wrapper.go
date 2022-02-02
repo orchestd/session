@@ -15,6 +15,7 @@ type sessionWrapper struct {
 }
 
 const DataVersionsKey = "versions"
+const DataNowKey = "dateNow"
 
 type ActiveOrder struct {
 	Id             string            `json:"id"`
@@ -208,11 +209,34 @@ func (s *sessionWrapper) GetTokenDataValueAsString(c context.Context, key string
 	return strVal, nil
 }
 
-func (s sessionWrapper) VersionsFromSessionToContext(c context.Context) (context.Context, error) {
+func (s sessionWrapper) SetDataFromSessionToContext(c context.Context) (context.Context, error) {
 	curSession, err := s.GetCurrentSession(c)
 	if err != nil {
 		return nil, err
 	}
+	c, err = s.versionsToContext(c, curSession)
+	if err != nil {
+		return c, err
+	}
+
+	c, err = s.nowToContext(c, curSession)
+	if err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
+func (s sessionWrapper) nowToContext(c context.Context, curSession session.Session) (context.Context, error) {
+	now := curSession.GetNow()
+	b, err := json.Marshal(now)
+	if err != nil {
+		return nil, err
+	}
+	c = context.WithValue(c, DataNowKey, string(b))
+	return c, nil
+}
+
+func (s sessionWrapper) versionsToContext(c context.Context, curSession session.Session) (context.Context, error) {
 	versions := curSession.GetCurrentCacheVersions()
 
 	b, err := json.Marshal(versions)

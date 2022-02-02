@@ -1,7 +1,6 @@
 package session
 
 import (
-	"bitbucket.org/HeilaSystems/session/models"
 	"context"
 	"time"
 )
@@ -12,15 +11,13 @@ type SessionResolverBuilder interface {
 }
 
 type SessionResolver interface {
-	VersionsFromSessionToContext(c context.Context) (context.Context, error)
-	GetVersionsFromContext(c context.Context) (models.Versions, bool, error)
+	SetDataFromSessionToContext(c context.Context) (context.Context, error)
 	GetSessionById(c context.Context, id string) (bool, Session, error)
 	GetTokenDataValueAsString(c context.Context, key string) (string, error)
 	NewSession(id string) Session
 	SaveSession(c context.Context, cSession Session) error
 	GetCurrentSession(c context.Context) (Session, error)
 	FreezeCacheVersionsForSession(c context.Context, curSession Session) error
-	GetVersionForCollectionFromContext(c context.Context, collectionName string) (string, error)
 	IsObsolete (c context.Context, sessionId string) (bool, error)
 }
 
