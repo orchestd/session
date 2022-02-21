@@ -120,7 +120,9 @@ func (c currentSession) GetNow() time.Time {
 	if c.FakeNow != nil {
 		return *c.FakeNow
 	} else {
-		return time.Now()
+		l := "2006-01-02 15:04:05"
+		d, _ := time.Parse(l, time.Now().Format(l))
+		return d
 	}
 }
 
