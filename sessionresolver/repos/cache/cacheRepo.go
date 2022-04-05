@@ -45,7 +45,7 @@ func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time) (map[str
 	for i := range versions {
 		var latestVersion cacheStorage.Version
 		for _, v := range versions[i].Versions {
-			if (latestVersion.TimedTo.IsZero() || v.TimedTo.After(latestVersion.TimedTo)) && latestVersion.TimedTo.Before(now) {
+			if (latestVersion.TimedTo.IsZero() || v.TimedTo.After(latestVersion.TimedTo)) && v.TimedTo.Before(now) {
 				latestVersion = v
 			}
 		}
