@@ -38,6 +38,16 @@ const (
 	ExistingCustomer
 )
 
+type deviceInfo struct {
+	Hardware    string
+	Runtime     string
+	OS          string
+	DeviceModel string
+	BrowserType string
+	AppVersion  string
+	OSVersion   string
+}
+
 type currentSession struct {
 	Id                   string
 	CustomerId           string
@@ -49,6 +59,36 @@ type currentSession struct {
 	OtpData              *Otp
 	CustomerStatus       CustomerStatus
 	Lang                 string
+	Referrer             string
+	DeviceInfo           deviceInfo
+}
+
+func (di deviceInfo) GetHardware() string {
+	return di.Hardware
+}
+
+func (di deviceInfo) GetRuntime() string {
+	return di.Runtime
+}
+
+func (di deviceInfo) GetOS() string {
+	return di.OS
+}
+
+func (di deviceInfo) GetDeviceModel() string {
+	return di.DeviceModel
+}
+
+func (di deviceInfo) GetBrowserType() string {
+	return di.BrowserType
+}
+
+func (di deviceInfo) GetAppVersion() string {
+	return di.AppVersion
+}
+
+func (di deviceInfo) GetOSVersion() string {
+	return di.OSVersion
 }
 
 func (c *currentSession) SetCustomerDetails(id string, isNew bool) {
@@ -136,6 +176,30 @@ func (c *currentSession) SetLang(lang string) {
 }
 
 func (c currentSession) GetLang() string {
+	return c.Lang
+}
+
+func (c *currentSession) SetDeviceInfo(hardware, runtime, os, deviceModel, browserType, appVersion, osVersion string) {
+	c.DeviceInfo = deviceInfo{
+		Hardware:    hardware,
+		Runtime:     runtime,
+		OS:          os,
+		DeviceModel: deviceModel,
+		BrowserType: browserType,
+		AppVersion:  appVersion,
+		OSVersion:   osVersion,
+	}
+}
+
+func (c currentSession) GetDeviceInfo() session.DeviceInfoResolver {
+	return c.DeviceInfo
+}
+
+func (c *currentSession) SetReferrer(lang string) {
+	c.Lang = lang
+}
+
+func (c currentSession) GetReferrer() string {
 	return c.Lang
 }
 
