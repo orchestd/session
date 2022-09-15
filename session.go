@@ -18,7 +18,7 @@ type SessionResolver interface {
 	SaveSession(c context.Context, cSession Session) error
 	GetCurrentSession(c context.Context) (Session, error)
 	FreezeCacheVersionsForSession(c context.Context, curSession Session) error
-	IsObsolete (c context.Context, sessionId string) (bool, error)
+	IsObsolete(c context.Context, sessionId string) (bool, error)
 }
 
 type Session interface {
@@ -38,6 +38,20 @@ type Session interface {
 	GetId() string
 	SetLang(lang string)
 	GetLang() string
+	SetDeviceInfo(hardware, runtime, os, deviceModel, browserType, appVersion, osVersion string)
+	GetDeviceInfo() DeviceInfoResolver
+	SetReferrer(string)
+	GetReferrer() string
+}
+
+type DeviceInfoResolver interface {
+	GetHardware() string
+	GetRuntime() string
+	GetOS() string
+	GetDeviceModel() string
+	GetBrowserType() string
+	GetAppVersion() string
+	GetOSVersion() string
 }
 
 type SessionRepo interface {
