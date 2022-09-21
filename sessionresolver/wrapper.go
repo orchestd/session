@@ -195,12 +195,12 @@ func (c currentSession) GetDeviceInfo() session.DeviceInfoResolver {
 	return c.DeviceInfo
 }
 
-func (c *currentSession) SetReferrer(lang string) {
-	c.Lang = lang
+func (c *currentSession) SetReferrer(referrer string) {
+	c.Referrer = referrer
 }
 
 func (c currentSession) GetReferrer() string {
-	return c.Lang
+	return c.Referrer
 }
 
 func (sw sessionWrapper) NewSession(id string) session.Session {
