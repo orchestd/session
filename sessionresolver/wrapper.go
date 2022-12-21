@@ -61,6 +61,7 @@ type currentSession struct {
 	Lang                 string
 	Referrer             string
 	DeviceInfo           deviceInfo
+	TermsApproval        bool
 }
 
 func (di deviceInfo) GetHardware() string {
@@ -177,6 +178,14 @@ func (c *currentSession) SetLang(lang string) {
 
 func (c currentSession) GetLang() string {
 	return c.Lang
+}
+
+func (c *currentSession) SetTermsApproval(termsApproval bool) {
+	c.TermsApproval = termsApproval
+}
+
+func (c currentSession) GetTermsApproval() bool {
+	return c.TermsApproval
 }
 
 func (c *currentSession) SetDeviceInfo(hardware, runtime, os, deviceModel, browserType, appVersion, osVersion string) {

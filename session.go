@@ -38,6 +38,8 @@ type Session interface {
 	GetId() string
 	SetLang(lang string)
 	GetLang() string
+	SetTermsApproval(termsApproval bool)
+	GetTermsApproval() bool
 	SetDeviceInfo(hardware, runtime, os, deviceModel, browserType, appVersion, osVersion string)
 	GetDeviceInfo() DeviceInfoResolver
 	SetReferrer(string)
