@@ -285,6 +285,39 @@ func (s *sessionWrapper) GetTokenDataValueAsString(c context.Context, key string
 	return strVal, nil
 }
 
+func (s sessionWrapper) SetDataToContext(curSession session.Session, c context.Context) (context.Context, error) {
+	c, err := s.versionsToContext(c, curSession)
+	if err != nil {
+		return c, err
+	}
+
+	c, err = s.nowToContext(c, curSession)
+	if err != nil {
+		return c, err
+	}
+
+	versions := make(map[string]string)
+	fixedVersions := curSession.GetFixedCacheVersions()
+	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow())
+	if err != nil {
+		return c, err
+	}
+	for collection, ver := range versionsForDate {
+		versions[collection] = ver
+	}
+	for collection, ver := range fixedVersions {
+		versions[collection] = ver
+	}
+	curSession.SetCurrentCacheVersions(versions)
+
+	c, err = s.versionsToContext(c, curSession)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
 func (s sessionWrapper) SetDataFromSessionToContext(c context.Context) (context.Context, error) {
 	curSession, err := s.GetCurrentSession(c)
 	if err != nil {

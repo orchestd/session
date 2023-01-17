@@ -12,6 +12,7 @@ type SessionResolverBuilder interface {
 
 type SessionResolver interface {
 	SetDataFromSessionToContext(c context.Context) (context.Context, error)
+	SetDataToContext(session Session, c context.Context) (context.Context, error)
 	GetSessionById(c context.Context, id string) (bool, Session, error)
 	GetTokenDataValueAsString(c context.Context, key string) (string, error)
 	NewSession(id string) Session
