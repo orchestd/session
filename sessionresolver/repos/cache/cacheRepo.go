@@ -1,10 +1,9 @@
 package cache
 
 import (
-	"bitbucket.org/HeilaSystems/cacheStorage"
-	"bitbucket.org/HeilaSystems/dependencybundler/interfaces/cache"
 	"context"
 	"fmt"
+	"github.com/orchestd/dependencybundler/interfaces/cache"
 	"time"
 )
 

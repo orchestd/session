@@ -1,12 +1,12 @@
 package sessionresolver
 
 import (
-	"bitbucket.org/HeilaSystems/session"
-	"bitbucket.org/HeilaSystems/session/models"
 	"bitbucket.org/HeilaSystems/tokenauth"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/orchestd/session"
+	"github.com/orchestd/session/models"
 	"time"
 )
 

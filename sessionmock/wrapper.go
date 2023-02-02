@@ -1,9 +1,9 @@
 package sessionmock
 
 import (
-	"bitbucket.org/HeilaSystems/session"
-	"bitbucket.org/HeilaSystems/session/models"
 	"context"
+	"github.com/orchestd/session"
+	"github.com/orchestd/session/models"
 	"time"
 )
 
@@ -80,11 +80,11 @@ func (s *sessionMockWrapper) GetVersionsFromContext(c context.Context) (models.V
 	return versions, true, nil
 }
 
-func Test(ao ActiveOrder)error{
+func Test(ao ActiveOrder) error {
 	return nil
 }
 func NewSessionMockWrapper(currentSessionToken string, customerId string, activeOrderId string, fakeNow *string,
-	storeId string,timeTo time.Time,tags []string,
+	storeId string, timeTo time.Time, tags []string,
 ) session.SessionResolver {
 	return &sessionMockWrapper{CurrentSessionToken: currentSessionToken, CurrentSession: currentSessionMock{
 		CustomerId:    customerId,

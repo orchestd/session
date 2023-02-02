@@ -1,9 +1,9 @@
 package sessionresolver
 
 import (
-	"bitbucket.org/HeilaSystems/session"
 	"container/list"
 	"fmt"
+	"github.com/orchestd/session"
 )
 
 type SessionResolverConfig struct {
@@ -19,8 +19,8 @@ func Builder() session.SessionResolverBuilder {
 }
 
 func (cr *defaultSessionResolver) SetRepo(repo session.SessionRepo) session.SessionResolverBuilder {
-	cr.ll.PushBack(func(cfg *SessionResolverConfig){
-		cfg.Repo =  repo
+	cr.ll.PushBack(func(cfg *SessionResolverConfig) {
+		cfg.Repo = repo
 	})
 	return cr
 }
@@ -34,5 +34,5 @@ func (cr *defaultSessionResolver) Build() (session.SessionResolver, error) {
 	if sessionCfg.Repo == nil {
 		return nil, fmt.Errorf("cannot initalize configurations without repo")
 	}
-	return &sessionWrapper{repo: sessionCfg.Repo},nil
+	return &sessionWrapper{repo: sessionCfg.Repo}, nil
 }
