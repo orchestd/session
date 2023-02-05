@@ -4,6 +4,6 @@ go 1.14
 
 require (
 	github.com/orchestd/cacheStorage v0.18.6
-	github.com/orchestd/dependencybundler v0.40.2
-	github.com/orchestd/tokenauth v0.4.3
+	github.com/orchestd/dependencybundler v0.40.3
+	github.com/orchestd/tokenauth v0.4.4
 )
