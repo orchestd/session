@@ -221,10 +221,26 @@ func (sw sessionWrapper) SaveSession(c context.Context, cSession session.Session
 	return sw.repo.InsertOrUpdate(c, cSession.GetId(), cSession)
 }
 
-func (sw sessionWrapper) FreezeCacheVersionsForSession(c context.Context, curSession session.Session) error {
+func (sw sessionWrapper) UnFreezeCacheVersionsForSession(c context.Context, curSession session.Session, action string) error {
 	versions := make(map[string]string)
 	fixedVersions := curSession.GetFixedCacheVersions()
-	versionsForDate, err := sw.repo.GetCacheVersions(c, curSession.GetNow())
+
+	for collection, ver := range fixedVersions {
+		versions[collection] = ver
+	}
+
+	curSession.SetCurrentCacheVersions(versions)
+	err := sw.SaveSession(c, curSession)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (sw sessionWrapper) FreezeCacheVersionsForSession(c context.Context, curSession session.Session, action string) error {
+	versions := make(map[string]string)
+	fixedVersions := curSession.GetFixedCacheVersions()
+	versionsForDate, err := sw.repo.GetCacheVersions(c, curSession.GetNow(), action)
 	if err != nil {
 		return err
 	}
@@ -285,7 +301,7 @@ func (s *sessionWrapper) GetTokenDataValueAsString(c context.Context, key string
 	return strVal, nil
 }
 
-func (s sessionWrapper) SetDataToContext(curSession session.Session, c context.Context) (context.Context, error) {
+func (s sessionWrapper) SetDataFromCurrentSessionToContext(c context.Context, curSession session.Session) (context.Context, error) {
 	c, err := s.versionsToContext(c, curSession)
 	if err != nil {
 		return c, err
@@ -295,26 +311,6 @@ func (s sessionWrapper) SetDataToContext(curSession session.Session, c context.C
 	if err != nil {
 		return c, err
 	}
-
-	versions := make(map[string]string)
-	fixedVersions := curSession.GetFixedCacheVersions()
-	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow())
-	if err != nil {
-		return c, err
-	}
-	for collection, ver := range versionsForDate {
-		versions[collection] = ver
-	}
-	for collection, ver := range fixedVersions {
-		versions[collection] = ver
-	}
-	curSession.SetCurrentCacheVersions(versions)
-
-	c, err = s.versionsToContext(c, curSession)
-	if err != nil {
-		return c, err
-	}
-
 	return c, nil
 }
 
@@ -323,16 +319,7 @@ func (s sessionWrapper) SetDataFromSessionToContext(c context.Context) (context.
 	if err != nil {
 		return nil, err
 	}
-	c, err = s.versionsToContext(c, curSession)
-	if err != nil {
-		return c, err
-	}
-
-	c, err = s.nowToContext(c, curSession)
-	if err != nil {
-		return c, err
-	}
-	return c, nil
+	return s.SetDataFromCurrentSessionToContext(c, curSession)
 }
 
 func (s sessionWrapper) nowToContext(c context.Context, curSession session.Session) (context.Context, error) {
@@ -347,6 +334,17 @@ func (s sessionWrapper) nowToContext(c context.Context, curSession session.Sessi
 
 func (s sessionWrapper) versionsToContext(c context.Context, curSession session.Session) (context.Context, error) {
 	versions := curSession.GetCurrentCacheVersions()
+
+	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow(), "")
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range versionsForDate {
+		if _, ok := versions[k]; !ok {
+			versions[k] = v
+		}
+	}
 
 	b, err := json.Marshal(versions)
 	if err != nil {
