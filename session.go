@@ -11,14 +11,14 @@ type SessionResolverBuilder interface {
 }
 
 type SessionResolver interface {
-	SetDataFromSessionToContext(c context.Context) (context.Context, error)
-	SetDataToContext(session Session, c context.Context) (context.Context, error)
+	SetDataToContext(c context.Context, cSession Session) (context.Context, error)
 	GetSessionById(c context.Context, id string) (bool, Session, error)
 	GetTokenDataValueAsString(c context.Context, key string) (string, error)
 	NewSession(id string) Session
 	SaveSession(c context.Context, cSession Session) error
 	GetCurrentSession(c context.Context) (Session, error)
-	FreezeCacheVersionsForSession(c context.Context, curSession Session) error
+	FreezeCacheVersionsForSession(c context.Context, curSession Session, action string) error
+	UnFreezeCacheVersionsForSession(c context.Context, curSession Session, action string) error
 	IsObsolete(c context.Context, sessionId string) (bool, error)
 }
 
@@ -60,5 +60,6 @@ type DeviceInfoResolver interface {
 type SessionRepo interface {
 	GetUserSessionByTokenToStruct(context context.Context, token string, dest interface{}) (bool, error)
 	InsertOrUpdate(ctx context.Context, id string, obj interface{}) error
-	GetCacheVersions(ctx context.Context, now time.Time) (map[string]string, error)
+	GetCacheVersions(ctx context.Context, now time.Time, filterAction string) (map[string]string, error)
+	GetCollectionsFilterActions(ctx context.Context, filterAction string) ([]string, error)
 }

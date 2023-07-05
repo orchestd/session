@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/orchestd/cacheStorage"
 	"github.com/orchestd/dependencybundler/interfaces/cache"
+	"github.com/orchestd/sharedlib/slices"
 	"time"
 )
 
@@ -35,24 +36,42 @@ func (r cacheRepo) InsertOrUpdate(ctx context.Context, id string, obj interface{
 	return r.cacheSetter.InsertOrUpdate(ctx, r.sessionCollectionName, id, r.version, obj)
 }
 
-func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time) (map[string]string, error) {
-	versions, err := r.cacheGetter.GetLatestVersions(ctx)
+func (r cacheRepo) GetCollectionsFilterActions(ctx context.Context, filterAction string) ([]string, error) {
+	cacheCollections, err := r.cacheGetter.GetLatestVersions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := []string{}
+	for _, cacheCollection := range cacheCollections {
+		if filterAction != "" && !slices.IsStrExist(cacheCollection.LockVersionUpon, filterAction) {
+			continue
+		}
+		result = append(result, cacheCollection.CollectionName)
+	}
+	return result, err
+}
+
+func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time, filterAction string) (map[string]string, error) {
+	cacheCollections, err := r.cacheGetter.GetLatestVersions(ctx)
 	if err != nil {
 		return nil, err
 	}
 	result := make(map[string]string)
 
-	for i := range versions {
+	for _, cacheCollection := range cacheCollections {
+		if filterAction != "" && !slices.IsStrExist(cacheCollection.LockVersionUpon, filterAction) {
+			continue
+		}
 		var latestVersion cacheStorage.Version
-		for _, v := range versions[i].Versions {
+		for _, v := range cacheCollection.Versions {
 			if (latestVersion.TimedTo.IsZero() || v.TimedTo.After(latestVersion.TimedTo)) && v.TimedTo.Before(now) {
 				latestVersion = v
 			}
 		}
 		if latestVersion.Version == "" {
-			return result, fmt.Errorf("no version found for collection %v by date %v", versions[i].CollectionName, now)
+			return result, fmt.Errorf("no version found for collection %v by date %v", cacheCollection.CollectionName, now)
 		}
-		result[versions[i].CollectionName] = latestVersion.Version
+		result[cacheCollection.CollectionName] = latestVersion.Version
 	}
 	return result, nil
 }
