@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/orchestd/session"
 	"github.com/orchestd/session/models"
+	"github.com/orchestd/sharedlib/slices"
 	"github.com/orchestd/tokenauth"
 	"time"
 )
@@ -223,14 +224,20 @@ func (sw sessionWrapper) SaveSession(c context.Context, cSession session.Session
 
 func (sw sessionWrapper) UnFreezeCacheVersionsForSession(c context.Context, curSession session.Session, action string) error {
 	versions := make(map[string]string)
-	fixedVersions := curSession.GetFixedCacheVersions()
+	currentCacheVersions := curSession.GetCurrentCacheVersions()
 
-	for collection, ver := range fixedVersions {
-		versions[collection] = ver
+	collectionsAfterFilter, err := sw.repo.GetCollectionsFilterActions(c, action)
+	if err != nil {
+		return err
 	}
 
+	for k, v := range currentCacheVersions {
+		if action == "" || !slices.IsStrExist(collectionsAfterFilter, action) {
+			versions[k] = v
+		}
+	}
 	curSession.SetCurrentCacheVersions(versions)
-	err := sw.SaveSession(c, curSession)
+	err = sw.SaveSession(c, curSession)
 	if err != nil {
 		return err
 	}
@@ -314,10 +321,12 @@ func (s sessionWrapper) SetDataFromCurrentSessionToContext(c context.Context, cu
 	return c, nil
 }
 
-func (s sessionWrapper) SetDataFromSessionToContext(c context.Context) (context.Context, error) {
-	curSession, err := s.GetCurrentSession(c)
-	if err != nil {
-		return nil, err
+func (s sessionWrapper) SetDataToContext(c context.Context, curSession session.Session) (context.Context, error) {
+	if curSession == nil {
+		var err error
+		if curSession, err = s.GetCurrentSession(c); err != nil {
+			return nil, err
+		}
 	}
 	return s.SetDataFromCurrentSessionToContext(c, curSession)
 }

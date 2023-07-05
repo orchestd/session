@@ -11,8 +11,7 @@ type SessionResolverBuilder interface {
 }
 
 type SessionResolver interface {
-	SetDataFromSessionToContext(c context.Context) (context.Context, error)
-	SetDataFromCurrentSessionToContext(c context.Context, curSession Session) (context.Context, error)
+	SetDataToContext(c context.Context, cSession Session) (context.Context, error)
 	GetSessionById(c context.Context, id string) (bool, Session, error)
 	GetTokenDataValueAsString(c context.Context, key string) (string, error)
 	NewSession(id string) Session
@@ -62,4 +61,5 @@ type SessionRepo interface {
 	GetUserSessionByTokenToStruct(context context.Context, token string, dest interface{}) (bool, error)
 	InsertOrUpdate(ctx context.Context, id string, obj interface{}) error
 	GetCacheVersions(ctx context.Context, now time.Time, filterAction string) (map[string]string, error)
+	GetCollectionsFilterActions(ctx context.Context, filterAction string) ([]string, error)
 }
