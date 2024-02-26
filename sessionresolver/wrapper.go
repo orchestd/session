@@ -244,19 +244,27 @@ func (sw sessionWrapper) UnFreezeCacheVersionsForSession(c context.Context, curS
 	return nil
 }
 
-func (sw sessionWrapper) FreezeCacheVersionsForSession(c context.Context, curSession session.Session, action string) error {
+func (sw sessionWrapper) FreezeCacheVersionsForSession(c context.Context, curSession session.Session, action string, cacheType string) error {
 	versions := make(map[string]string)
-	fixedVersions := curSession.GetFixedCacheVersions()
-	versionsForDate, err := sw.repo.GetCacheVersions(c, curSession.GetNow(), action)
+
+	currentCacheVersions := curSession.GetCurrentCacheVersions()
+	for collection, ver := range currentCacheVersions {
+		versions[collection] = ver
+	}
+
+	versionsForDate, err := sw.repo.GetCacheVersions(c, curSession.GetNow(), action, cacheType)
 	if err != nil {
 		return err
 	}
 	for collection, ver := range versionsForDate {
 		versions[collection] = ver
 	}
+
+	fixedVersions := curSession.GetFixedCacheVersions()
 	for collection, ver := range fixedVersions {
 		versions[collection] = ver
 	}
+
 	curSession.SetCurrentCacheVersions(versions)
 	err = sw.SaveSession(c, curSession)
 	if err != nil {
@@ -344,7 +352,7 @@ func (s sessionWrapper) nowToContext(c context.Context, curSession session.Sessi
 func (s sessionWrapper) versionsToContext(c context.Context, curSession session.Session) (context.Context, error) {
 	versions := curSession.GetCurrentCacheVersions()
 
-	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow(), "")
+	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow(), "", "")
 	if err != nil {
 		return nil, err
 	}

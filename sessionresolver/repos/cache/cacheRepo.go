@@ -51,7 +51,7 @@ func (r cacheRepo) GetCollectionsFilterActions(ctx context.Context, filterAction
 	return result, err
 }
 
-func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time, filterAction string) (map[string]string, error) {
+func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time, filterAction string, filterType string) (map[string]string, error) {
 	cacheCollections, err := r.cacheGetter.GetLatestVersions(ctx)
 	if err != nil {
 		return nil, err
@@ -60,6 +60,9 @@ func (r cacheRepo) GetCacheVersions(ctx context.Context, now time.Time, filterAc
 
 	for _, cacheCollection := range cacheCollections {
 		if filterAction != "" && !slices.IsStrExist(cacheCollection.LockVersionUpon, filterAction) {
+			continue
+		}
+		if filterType != "" && cacheCollection.CacheType != filterType {
 			continue
 		}
 		var latestVersion cacheStorage.Version
