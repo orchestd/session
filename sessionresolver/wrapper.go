@@ -352,6 +352,10 @@ func (s sessionWrapper) nowToContext(c context.Context, curSession session.Sessi
 func (s sessionWrapper) versionsToContext(c context.Context, curSession session.Session) (context.Context, error) {
 	versions := curSession.GetCurrentCacheVersions()
 
+	if versions == nil {
+		versions = map[string]string{}
+	}
+
 	versionsForDate, err := s.repo.GetCacheVersions(c, curSession.GetNow(), "", "")
 	if err != nil {
 		return nil, err
