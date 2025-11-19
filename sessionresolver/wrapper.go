@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/orchestd/session"
 	"github.com/orchestd/session/models"
 	"github.com/orchestd/sharedlib/slices"
 	"github.com/orchestd/tokenauth"
-	"time"
 )
 
 type sessionWrapper struct {
@@ -17,6 +18,17 @@ type sessionWrapper struct {
 
 const DataVersionsKey = "versions"
 const DataNowKey = "dateNow"
+
+type SessionHooker interface {
+	ValidateLocal(session session.Session) error
+}
+
+func ValidateLocal(s session.Session, i interface{}) error {
+	if validator, ok := i.(SessionHooker); ok {
+		return validator.ValidateLocal(s)
+	}
+	return nil
+}
 
 type ActiveOrder struct {
 	Id             string            `json:"id"`
