@@ -20,12 +20,19 @@ const DataVersionsKey = "versions"
 const DataNowKey = "dateNow"
 
 type SessionHooker interface {
-	ValidateLocal(session session.Session) error
+	ValidateLocal(c context.Context, session sessionWrapper) error
 }
 
-func ValidateLocal(s session.Session, i interface{}) error {
+//func ValidateLocal(s session.Session, i interface{}) error {
+//	if validator, ok := i.(SessionHooker); ok {
+//		return validator.ValidateLocal(s)
+//	}
+//	return nil
+//}
+
+func (s sessionWrapper) ValidateLocal(c context.Context, i interface{}) error {
 	if validator, ok := i.(SessionHooker); ok {
-		return validator.ValidateLocal(s)
+		return validator.ValidateLocal(c, s)
 	}
 	return nil
 }
