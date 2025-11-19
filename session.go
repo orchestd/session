@@ -45,7 +45,6 @@ type Session interface {
 	GetDeviceInfo() DeviceInfoResolver
 	SetReferrer(string)
 	GetReferrer() string
-	IsMaintenance() bool
 }
 
 type DeviceInfoResolver interface {

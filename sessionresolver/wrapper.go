@@ -3,7 +3,6 @@ package sessionresolver
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -19,9 +18,17 @@ type sessionWrapper struct {
 
 const DataVersionsKey = "versions"
 const DataNowKey = "dateNow"
-const MaintenanceKey = "maintenance"
 
-var UnavailableError = errors.New("unavailable")
+type SessionHooker interface {
+	ValidateLocal(session session.Session) error
+}
+
+func ValidateLocal(s session.Session, i interface{}) error {
+	if validator, ok := i.(SessionHooker); ok {
+		return validator.ValidateLocal(s)
+	}
+	return nil
+}
 
 type ActiveOrder struct {
 	Id             string            `json:"id"`
@@ -218,13 +225,6 @@ func (c currentSession) GetReferrer() string {
 	return c.Referrer
 }
 
-func (c *currentSession) IsMaintenance() bool {
-	if _, ok := c.CurrentCacheVersions[MaintenanceKey]; ok {
-		return true
-	}
-	return false
-}
-
 func (sw sessionWrapper) NewSession(id string) session.Session {
 	newCurrentSession := &currentSession{Id: id, CustomerStatus: NoCustomer}
 	return newCurrentSession
@@ -348,11 +348,6 @@ func (s sessionWrapper) SetDataToContext(c context.Context, curSession session.S
 			return nil, err
 		}
 	}
-
-	if curSession.IsMaintenance() {
-		return nil, UnavailableError
-	}
-
 	return s.SetDataFromCurrentSessionToContext(c, curSession)
 }
 
