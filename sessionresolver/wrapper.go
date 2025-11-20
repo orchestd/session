@@ -214,15 +214,15 @@ func (c currentSession) GetReferrer() string {
 	return c.Referrer
 }
 
+type SessionHooker interface {
+	ValidateSession(c context.Context, session session.Session) error
+}
+
 func (cs *currentSession) CustomValidation(c context.Context, i interface{}) error {
 	if validator, ok := i.(SessionHooker); ok {
 		return validator.ValidateSession(c, cs)
 	}
 	return nil
-}
-
-type SessionHooker interface {
-	ValidateSession(c context.Context, session session.Session) error
 }
 
 func (sw sessionWrapper) NewSession(id string) session.Session {
