@@ -45,6 +45,7 @@ type Session interface {
 	GetDeviceInfo() DeviceInfoResolver
 	SetReferrer(string)
 	GetReferrer() string
+	CustomValidation(ctx context.Context, i interface{}) error
 }
 
 type DeviceInfoResolver interface {
