@@ -214,7 +214,7 @@ func (c currentSession) GetReferrer() string {
 	return c.Referrer
 }
 
-func (cs *currentSession) ValidateLocal(c context.Context, i interface{}) error {
+func (cs *currentSession) CustomValidation(c context.Context, i interface{}) error {
 	if validator, ok := i.(SessionHooker); ok {
 		return validator.ValidateSession(c, cs)
 	}
